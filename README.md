@@ -99,19 +99,22 @@ The project uses ADO.NET with Npgsql for PostgreSQL data access:
 
 ```csharp
 // Example repository implementation
-public class SampleRepository : ISampleRepository
+public class AuthRepository : IAuthRepository
 {
-    private readonly DatabaseContext _context;
+        public async Task<bool> EmailExistsAsync(string email)
+        {
+            using (var connection = DatabaseContext.CreateConnection())
+            {
+                await connection.OpenAsync();
 
-    public SampleRepository(DatabaseContext context)
-    {
-        _context = context;
-    }
+                const string query = "SELECT COUNT(1) FROM person WHERE email = @email";
 
-    public async Task<IEnumerable<Sample>> GetAllAsync()
-    {
-        using var connection = _context.CreateConnection();
-        var sql = "SELECT * FROM samples";
-        return await connection.QueryAsync<Sample>(sql);
-    }
+                using (var command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@email", email);
+                    var count = (long)await command.ExecuteScalarAsync();
+                    return count > 0;
+                }
+            }
+        }
 }
