@@ -1,8 +1,10 @@
 ﻿using Npgsql;
+
 using Infrastructure.Persistence;
 
 
 using Domain.Entities.VendorVerification;
+using Domain.Enums.enVendorVerification;
 
 using Application.Interfaces;
 using Application.DTOs.VendorVerificationDTOs;
@@ -10,6 +12,8 @@ using Application.DTOs.VendorVerificationDTOs;
 
 public class VendorVerificationRepository : IVendorVerificationRepository
 {
+
+    #region GetData
     public async Task<VendorProfile> GetVendorVerificationInfoAsync(Guid vendorId)
     {
         using (var connection = DatabaseContext.CreateConnection())
@@ -33,14 +37,12 @@ public class VendorVerificationRepository : IVendorVerificationRepository
                             Id = reader.GetGuid(0),
                             NationalId = reader.GetString(1),
                             TradeId = reader.GetString(2),
-                            NationalIdExpirationDate = reader.GetDateTime(3),
-                            TradeIdExpirationDate = reader.GetDateTime(4),
-                            OtherInfo = reader.IsDBNull(5) ? null : reader.GetString(5),
-                            Status = (VerificationStatus)reader.GetInt32(6),
-                            VerificationDate = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
-                            Comments = reader.IsDBNull(8) ? null : reader.GetString(8),
-                            UpdateDate = reader.GetDateTime(9),
-                            VerifiedByAdmin = reader.IsDBNull(10) ? null : reader.GetGuid(10)
+                            OtherInfo = reader.IsDBNull(3) ? null : reader.GetString(3),
+                            Status = (VerificationStatus)reader.GetInt16(4),
+                            VerificationDate = reader.IsDBNull(5) ? null : reader.GetDateTime(5),
+                            Comments = reader.IsDBNull(6) ? null : reader.GetString(6),
+                            UpdateDate = reader.GetDateTime(7),
+                            VerifiedByAdmin = reader.IsDBNull(8) ? null : reader.GetGuid(8)
                         };
                     }
                 }
@@ -48,7 +50,41 @@ public class VendorVerificationRepository : IVendorVerificationRepository
         }
         return null;
     }
-    
+    public async Task<VendorVerificationDocument> GetVerificationDocumentAsync(int documentId)
+    {
+        using (var connection = DatabaseContext.CreateConnection())
+        {
+            await connection.OpenAsync();
+
+            const string query = @"
+                SELECT document_type, front_document_url, back_document_url, upload_date, expiration_date
+                FROM vendor_verification_document 
+                WHERE vendor_profile_id = @vendorId
+                ORDER BY upload_date DESC";
+
+            using (var command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@documentId", documentId);
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        return new VendorVerificationDocument
+                        {
+                            Id = documentId,
+                            VendorProfileId = reader.GetGuid(0),
+                            DocumentTypeId = reader.GetInt16(1),
+                            FrontDocumentUrl = reader.GetString(2),
+                            BackDocumentUrl = reader.IsDBNull(3) ? null : reader.GetString(3),
+                            UploadDate = reader.GetDateTime(4),
+                            ExpirationDate = reader.GetDateTime(5)
+                        };
+                    }
+                }
+            }
+        }
+        return null;
+    }
     public async Task<IEnumerable<VendorVerificationDocument>> GetVerificationDocumentsAsync(Guid vendorId)
     {
         var documents = new List<VendorVerificationDocument>();
@@ -58,13 +94,10 @@ public class VendorVerificationRepository : IVendorVerificationRepository
             await connection.OpenAsync();
 
             const string query = @"
-                SELECT 
-                    vd.id, vd.document_type, vd.front_document_url, vd.back_document_url, vd.upload_date,
-                    vdt.name as document_type_name
-                FROM vendor_verification_document vd
-                JOIN verification_document_type vdt ON vd.document_type = vdt.id
-                WHERE vd.vendor_profile_id = @vendorId
-                ORDER BY vd.upload_date DESC";
+                SELECT id, document_type, front_document_url, back_document_url, upload_date, expiration_date
+                FROM vendor_verification_document 
+                WHERE vendor_profile_id = @vendorId
+                ORDER BY upload_date DESC";
 
             using (var command = new NpgsqlCommand(query, connection))
             {
@@ -82,7 +115,7 @@ public class VendorVerificationRepository : IVendorVerificationRepository
                             FrontDocumentUrl = reader.GetString(2),
                             BackDocumentUrl = reader.IsDBNull(3) ? null : reader.GetString(3),
                             UploadDate = reader.GetDateTime(4),
-                            DocumentTypeName = reader.GetString(5)
+                            ExpirationDate = reader.GetDateTime(5)
                         });
                     }
                 }
@@ -91,7 +124,11 @@ public class VendorVerificationRepository : IVendorVerificationRepository
         return documents;
     }
 
-    public async Task<int> AddVerificationDocumentAsync(VendorVerificationDocument document)
+    #endregion
+
+
+    #region AddData
+    public async Task<int> AddVerificationDocumentAsync(Guid vendorID, VerificationDocumentDto document)
     {
         using (var connection = DatabaseContext.CreateConnection())
         {
@@ -105,7 +142,7 @@ public class VendorVerificationRepository : IVendorVerificationRepository
 
             using (var command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@vendorId", document.VendorProfileId);
+                command.Parameters.AddWithValue("@vendorId", vendorID);
                 command.Parameters.AddWithValue("@documentType", document.DocumentTypeId);
                 command.Parameters.AddWithValue("@frontUrl", document.FrontDocumentUrl);
                 command.Parameters.AddWithValue("@backUrl", (object)document.BackDocumentUrl ?? DBNull.Value);
@@ -115,6 +152,28 @@ public class VendorVerificationRepository : IVendorVerificationRepository
         }
     }
 
+    #endregion
+
+
+    #region UpdateData
+
+    public async Task SetVerificationDocumentExpirationDateAsync(int documentId, DateTime expirationDate)
+    {
+        using (var connection = DatabaseContext.CreateConnection())
+        {
+            await connection.OpenAsync();
+            const string query = @"
+                UPDATE vendor_verification_document
+                SET expiration_date = @expirationDate
+                WHERE id = @documentId";
+            using (var command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@documentId", documentId);
+                command.Parameters.AddWithValue("@expirationDate", expirationDate);
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+    }
     public async Task UpdateVerificationStatusAsync(VerificationStatusUpdateDto update)
     {
         using (var connection = DatabaseContext.CreateConnection())
@@ -143,50 +202,58 @@ public class VendorVerificationRepository : IVendorVerificationRepository
         }
     }
 
-    public async Task<bool> DocumentTypeExistsAsync(int documentTypeId)
+    #endregion
+
+
+    #region CheckData
+
+
+    public async Task<bool> IsVendorVerifiedAsync(Guid vendorId)
     {
         using (var connection = DatabaseContext.CreateConnection())
         {
             await connection.OpenAsync();
-
-            const string query = "SELECT COUNT(1) FROM verification_document_type WHERE id = @typeId";
-
+            const string query = "SELECT COUNT(1) FROM vendor_profile WHERE id = @vendorId AND verification_status = 2";
             using (var command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@typeId", documentTypeId);
+                command.Parameters.AddWithValue("@vendorId", vendorId);
                 var count = (long)await command.ExecuteScalarAsync();
                 return count > 0;
             }
         }
     }
 
-    public async Task<VerificationDocumentType> GetDocumentTypeAsync(short documentTypeId)
+    #endregion
+
+
+    #region DeleteData
+    public async Task DeleteVerificationDocumentAsync(Guid vendorID)
     {
         using (var connection = DatabaseContext.CreateConnection())
         {
             await connection.OpenAsync();
-
-            const string query = "SELECT name, specific_notes FROM verification_document_type WHERE id = @typeId";
-
+            const string query = "DELETE FROM vendor_verification_document WHERE vendor_profile_id = @vendorId";
             using (var command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@typeId", documentTypeId);
-
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    if(await reader.ReadAsync())
-                    {
-                        return new VerificationDocumentType
-                        {
-                            Id = documentTypeId,
-                            Name = reader.GetString(0),
-                            SpecificNotes = reader.IsDBNull(1) ? null : reader.GetString(1)
-                        };
-                    }
-                }
+                command.Parameters.AddWithValue("@vendorId", vendorID);
+                await command.ExecuteNonQueryAsync();
             }
         }
-        return null;
     }
+    public async Task DeleteVerificationDocumentAsync(int documentId)
+    {
+        using (var connection = DatabaseContext.CreateConnection())
+        {
+            await connection.OpenAsync();
+            const string query = "DELETE FROM vendor_verification_document WHERE id = @documentId";
+            using (var command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@documentId", documentId);
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+    }
+
+    #endregion
 
 }

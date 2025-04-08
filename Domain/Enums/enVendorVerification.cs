@@ -1,4 +1,5 @@
 ﻿
+namespace Domain.Enums.enVendorVerification;
 
 public enum VerificationStatus
 {
