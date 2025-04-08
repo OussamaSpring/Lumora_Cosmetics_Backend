@@ -22,11 +22,4 @@ namespace Domain.Enums.enAccount
         Unknown = 3
     }
 
-    public enum VerificationStatus
-    {
-        Pending = 1,
-        Approved = 2,
-        Rejected = 3,
-        Under_Review = 4
-    }
 }
