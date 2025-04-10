@@ -1,6 +1,4 @@
-﻿
-
-namespace Domain.Entities.ProductRelated;
+﻿namespace Domain.Entities.ProductRelated;
 
 public class ProductImage
 {

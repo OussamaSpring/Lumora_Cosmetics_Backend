@@ -1,6 +1,4 @@
-﻿
-
-namespace Domain.Entities.AccountRelated;
+﻿namespace Domain.Entities.AccountRelated;
 
 public class AddressList
 {

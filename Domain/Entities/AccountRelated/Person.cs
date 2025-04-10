@@ -1,4 +1,4 @@
-﻿using Domain.Enums.enAccount;
+﻿using Domain.Enums.Account;
 
 namespace Domain.Entities.AccountRelated;
 
