@@ -38,6 +38,7 @@ public class UserAuthentication : IUserAuthentication
         }
         catch (Exception ex)
         {
+            Console.WriteLine(ex.StackTrace);
             return Result<string>.Failure(new Error("Internal Server Error", ex.Message));
         }
     }

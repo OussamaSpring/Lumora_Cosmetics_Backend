@@ -20,27 +20,38 @@ public sealed class JwtTokenProvider : ITokenProvider
 
     public string GenerateToken(User user)
     {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
-
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-        var tokenDescriptor = new SecurityTokenDescriptor
+        try
         {
-            Subject = new ClaimsIdentity
-            ([
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("Role", user.Role.ToString())
-            ]),
-            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.Expires),
-            SigningCredentials = credentials,
-            Issuer = _jwtSettings.Issuer,
-            Audience = _jwtSettings.Audience,
-        };
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
 
-        var handler = new JsonWebTokenHandler();
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        return handler.CreateToken(tokenDescriptor);
+            Console.WriteLine($"{user.Id} {user.Email} {user.Role}");
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity
+                ([
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                    new Claim("Role", user.Role.ToString())
+                ]),
+                Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.Expires),
+                SigningCredentials = credentials,
+                Issuer = _jwtSettings.Issuer,
+                Audience = _jwtSettings.Audience,
+            };
+
+            var handler = new JsonWebTokenHandler();
+
+            return handler.CreateToken(tokenDescriptor);
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.StackTrace);
+            return "te";
+        }
     }
 
     ClaimsPrincipal ITokenProvider.GetPrincipalFromToken(string token)
