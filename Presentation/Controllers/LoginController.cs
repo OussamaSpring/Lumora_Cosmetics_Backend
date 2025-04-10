@@ -25,11 +25,7 @@ public class LoginController : ControllerBase
         }
 
         var result = _userAuthentication.Login(loginRequest);
-        return result.IsSuccess ? Ok(new
-        {
-            Token = result.Value,
-            Success = result.IsSuccess
-        }) : Unauthorized();
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
 
     }
 }
