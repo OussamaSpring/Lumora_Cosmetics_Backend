@@ -12,14 +12,14 @@ namespace Persistence.Repositories
 {
     public class AuthRepository : IAuthRepository
     {
-        public async Task<User> GetUserByUsernameOrEmailAsync(string usernameOrEmail)
+        public async Task<User?> GetUserByUsernameOrEmailAsync(string usernameOrEmail)
         {
             using (var connection = DatabaseContext.CreateConnection())
             {
                 await connection.OpenAsync();
 
                 const string query = @"
-                SELECT u.id, u.person_id, u.username, u.password, u.profile_image, u.update_date, u.status, u.role
+                SELECT u.id, u.person_id, u.username, u.password, u.profile_image, u.update_date, u.status, u.role, p.email
                 FROM ""user"" u
                 JOIN person p ON u.person_id = p.id
                 WHERE u.username = @usernameOrEmail OR p.email = @usernameOrEmail";
@@ -40,7 +40,8 @@ namespace Persistence.Repositories
                             ProfileImageURL = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
                             UpdateDate = reader.GetDateTime(5),
                             AccountStatus = (AccountStatus)reader.GetInt16(6),
-                            Role = (UserRole)reader.GetInt16(7)
+                            Role = (UserRole)reader.GetInt16(7),
+                            Email = reader.GetString(8)
                             };
                         }
                     }
@@ -50,7 +51,7 @@ namespace Persistence.Repositories
             return null;
         }
 
-        public async Task<Admin> GetAdminByUsernameOrEmailAsync(string usernameOrEmail)
+        public async Task<Admin?> GetAdminByUsernameOrEmailAsync(string usernameOrEmail)
         {
             using (var connection = DatabaseContext.CreateConnection())
             {
