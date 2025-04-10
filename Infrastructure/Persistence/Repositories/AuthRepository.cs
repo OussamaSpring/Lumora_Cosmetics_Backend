@@ -37,7 +37,7 @@ namespace Persistence.Repositories
                             PersonId = reader.GetGuid(1),
                             Username = reader.GetString(2),
                             Password = reader.GetString(3),
-                            Profile_Image_URL = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
+                            ProfileImageURL = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
                             UpdateDate = reader.GetDateTime(5),
                             AccountStatus = (AccountStatus)reader.GetInt16(6),
                             Role = (UserRole)reader.GetInt16(7)
