@@ -20,7 +20,8 @@ public class AuthRepository : IAuthRepository
         using var connection = _databaseContext.CreateConnection();
 
         const string query = @"
-                SELECT u.id, u.person_id, u.username, u.password, u.profile_image, u.update_date, u.status, u.role, p.email
+                SELECT u.id, u.person_id, u.username, u.password,
+                u.profile_image, u.update_date, u.status, u.role, p.email
                 FROM ""user"" u
                 JOIN person p ON u.person_id = p.id
                 WHERE u.username = @usernameOrEmail OR p.email = @usernameOrEmail";
@@ -28,7 +29,6 @@ public class AuthRepository : IAuthRepository
         await connection.OpenAsync();
         using var command = new NpgsqlCommand(query, connection);
         command.Parameters.AddWithValue("@usernameOrEmail", usernameOrEmail);
-
         using var reader = await command.ExecuteReaderAsync();
         if (await reader.ReadAsync())
         {
@@ -38,7 +38,7 @@ public class AuthRepository : IAuthRepository
                 PersonId = reader.GetGuid(1),
                 Username = reader.GetString(2),
                 Password = reader.GetString(3),
-                ProfileImageUrl = reader.GetValue(4) == DBNull.Value ? reader.GetString(4) : null,
+                ProfileImageUrl = reader.IsDBNull(4) ? null : reader.GetString(4),
                 UpdateDate = reader.GetDateTime(5),
                 AccountStatus = (AccountStatus)reader.GetInt16(6),
                 Role = (UserRole)reader.GetInt16(7),
