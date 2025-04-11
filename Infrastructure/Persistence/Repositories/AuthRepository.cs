@@ -109,8 +109,13 @@ public class AuthRepository : IAuthRepository
         using var command = new NpgsqlCommand(query, connection);
         command.Parameters.AddWithValue("@email", email);
 
-        var count = (long)await command.ExecuteScalarAsync();
-        return count > 0;
+        object result = await command.ExecuteScalarAsync();
+        if (result == null || result == DBNull.Value)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public async Task<Guid> CreatePersonAsync(Person person)

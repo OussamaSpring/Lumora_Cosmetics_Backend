@@ -25,7 +25,7 @@ public class UserProfileRepository : IUserProfileRepository
 
     #region AddData
     
-    public async Task<int> AddAddressAsync(Guid userID, AddressDTO newAddress)
+    public async Task<int> AddAddressAsync(Guid userID, Address newAddress)
     {
         using var connection = _databaseContext.CreateConnection();
         const string query1 = @"INSERT INTO address
@@ -63,7 +63,7 @@ public class UserProfileRepository : IUserProfileRepository
 
 
     #region GetData
-    public async Task<User> GetProfileAsync(Guid userId)
+    public async Task<User?> GetProfileAsync(Guid userId)
     {
         using (var connection = _databaseContext.CreateConnection())
         {
@@ -176,7 +176,7 @@ public class UserProfileRepository : IUserProfileRepository
 
 
     #region UpdateData
-    public async Task UpdateProfileAsync(Guid userId, ProfileUpdateDto profile)
+    public async Task UpdatePersonAsync(Guid userId, ProfileUpdateDto profile)
     {
         using (var connection = _databaseContext.CreateConnection())
         {
@@ -307,69 +307,5 @@ public class UserProfileRepository : IUserProfileRepository
 
 
     #region CheckData
-    public async Task<bool> EmailExistsAsync(string email, Guid? excludedUserId = null)
-    {
-        using (var connection = _databaseContext.CreateConnection())
-        {
-            await connection.OpenAsync();
-
-            var query = @"
-                SELECT COUNT(1) 
-                FROM person p
-                JOIN ""user"" u ON p.id = u.person_id
-                WHERE p.email = @email";
-
-            if (excludedUserId.HasValue)
-            {
-                query += " AND u.id != @excludedUserId";
-            }
-
-            using (var command = new NpgsqlCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@email", email);
-                if (excludedUserId.HasValue)
-                {
-                    command.Parameters.AddWithValue("@excludedUserId", excludedUserId.Value);
-                }
-
-                var count = (long)await command.ExecuteScalarAsync();
-                return count > 0;
-            }
-        }
-    }
-
-
-    public async Task<bool> PhoneNumberExistsAsync(string phoneNumber, Guid? excludedUserId = null)
-    {
-        using (var connection = _databaseContext.CreateConnection())
-        {
-            await connection.OpenAsync();
-
-            var query = @"
-                SELECT COUNT(1) 
-                FROM person p
-                JOIN ""user"" u ON p.id = u.person_id
-                WHERE p.phone_number = @phone";
-
-            if (excludedUserId.HasValue)
-            {
-                query += " AND u.id != @excludedUserId";
-            }
-
-            using (var command = new NpgsqlCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@phone", phoneNumber);
-                if (excludedUserId.HasValue)
-                {
-                    command.Parameters.AddWithValue("@excludedUserId", excludedUserId.Value);
-                }
-
-                var count = (long)await command.ExecuteScalarAsync();
-                return count > 0;
-            }
-        }
-    }
     #endregion
-
-
 }
