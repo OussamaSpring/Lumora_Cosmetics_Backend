@@ -46,7 +46,7 @@ public class UserAuthentication : IUserAuthentication
         {
             return ((string.Compare(user.Username, loginRequest.UsernameOrEmail, true) == 0 ||
                      string.Compare(user.Email, loginRequest.UsernameOrEmail, true) == 0) &&
-                     user.validPassword(loginRequest.Password));
+                     user.VirifyPassword(loginRequest.Password));
         }
     }
 
@@ -82,7 +82,7 @@ public class UserAuthentication : IUserAuthentication
             {
                 Username = registerRequest.Username,
                 Email = registerRequest.Email,
-                Password = registerRequest.Password,
+                Password = HasherSHA256.Hash(registerRequest.Password),
                 ProfileImageUrl = string.Empty, // profile image (nullable)
                 Role = userRole,
                 AccountStatus = AccountStatus.Active,

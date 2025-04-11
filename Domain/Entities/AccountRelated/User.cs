@@ -6,17 +6,18 @@ namespace Domain.Entities.AccountRelated;
 public class User
 {
     public Guid UserId { get; set; }
-    public string Email { get; set; }
-    public string Username { get; set; }
-    public string Password { get; set => HasherSHA256.Hash(value); }
+    public required string Email { get; set; }
+    public required string Username { get; set; }
+    public required string Password { get; set; }
     public string? ProfileImageUrl { get; set; }
+    public required DateTime UpdateDate { get; set; }
     public DateTime? CloseDate { get; set; }
     public AccountStatus AccountStatus { get; set; }
     public UserRole Role { get; set; }
     public Guid PersonId { get; set; }
 
-    public bool validPassword(string _password)
+    public bool VirifyPassword(string password)
     {
-        return string.Compare(Password, HasherSHA256.Hash(_password), false) == 0;
+        return string.Compare(Password, HasherSHA256.Hash(password), false) == 0;
     }
 }
