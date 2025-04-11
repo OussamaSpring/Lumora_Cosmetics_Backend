@@ -1,6 +1,7 @@
 ﻿
 
-using Domain.Enums.enProduct;
+using Domain.Enums;
+using Domain.Enums.Product;
 
 namespace Domain.Entities.ProductRelated;
 
