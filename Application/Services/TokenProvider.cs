@@ -26,13 +26,11 @@ public sealed class JwtTokenProvider : ITokenProvider
 
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            Console.WriteLine($"{user.Id} {user.Email} {user.Role}");
-
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity
                 ([
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                    new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
                     new Claim(JwtRegisteredClaimNames.Email, user.Email),
                     new Claim("Role", user.Role.ToString())
                 ]),
@@ -50,7 +48,7 @@ public sealed class JwtTokenProvider : ITokenProvider
         catch (Exception ex)
         {
             Console.WriteLine(ex.StackTrace);
-            return "te";
+            return string.Empty;
         }
     }
 

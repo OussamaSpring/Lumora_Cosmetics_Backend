@@ -1,50 +1,42 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using Domain.Enums.Account;
 
 namespace Application.DTOs;
 
 public class LoginRequest
 {
-    [Required]
-    public string UsernameOrEmail { get; set; }
-    [Required]
-    public string Password { get; set; }
-}
-
-
-public class LoginResponse
-{
-    public Guid UserId { get; set; }
-    public string Username { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-
-    public AccountStatus AccountStatus { get; set; }
-    public UserRole Role { get; set; }
+    // should add regex
+    public required string UsernameOrEmail { get; set; }
+    
+    [PasswordPropertyText]
+    public required string Password { get; set; }
 }
 
 
 public class RegisterRequest
 {
-    [Required]
-    public string FirstName { get; set; }
-    [Required]
-    public string LastName { get; set; }
-    [Required]
-    public string Email { get; set; }
+    [RegularExpression("^(?=.{6,16}$)(?=(?:.*[A-Za-z]){4})[\\w-]+$\r\n", ErrorMessage = "erorr")]
+    public required string Username { get; set; }
 
-    [Required]
-    public string Password { get; set; }
-    public UserRole Role { get; set; }
-}
+    [EmailAddress]
+    public required string Email { get; set; }
+    
+    [PasswordPropertyText]
+    public required string Password { get; set; }
 
-public class RegisterResponse
-{
-    public Guid UserID { get; set; }
-    public string Username { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-    public UserRole Role { get; set; }
+    [Length(4, 50, ErrorMessage = "error")] // should rewrite errors
+    public required string FirstName { get; set; }
+    
+    [Length(4, 50, ErrorMessage = "error")]
+    public string? MiddleName { get; set; }
+    
+    [Length(4, 50, ErrorMessage = "error")]
+    public required string LastName { get; set; }
+
+    public DateTime? DateOfBirth { get; set; }
+
+    public required Gender Gender { get; set; }
+    
+    public long? PhoneNumber { get; set; }
 }
