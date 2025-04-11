@@ -58,7 +58,7 @@ namespace Persistence.Repositories
                 await connection.OpenAsync();
 
                 const string query = @"
-                SELECT a.id, a.person_id, a.username, a.password, a.profile_image, a.update_date, a.status, a.role
+                SELECT a.id, a.person_id, a.username, a.password, a.profile_image, a.update_date, a.status, a.role, p.email
                 FROM admin a
                 JOIN person p ON a.person_id = p.id
                 WHERE a.username = @usernameOrEmail OR p.email = @usernameOrEmail";
@@ -80,6 +80,7 @@ namespace Persistence.Repositories
                                 Profile_Image_URL = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
                                 UpdateDate = reader.GetDateTime(4),
                                 AccountStatus = (AccountStatus)reader.GetInt16(5),
+                                Email = reader.GetString(6)
                             };
                         }
                     }
