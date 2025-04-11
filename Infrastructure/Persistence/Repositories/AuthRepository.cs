@@ -17,7 +17,7 @@ public class AuthRepository : IAuthRepository
 
     public async Task<User?> GetUserByUsernameOrEmailAsync(string usernameOrEmail)
     {
-        using var connection = _databaseContext.CreateConnection();
+                using var connection = _databaseContext.CreateConnection();
 
         const string query = @"
                 SELECT u.id, u.person_id, u.username, u.password,
@@ -49,12 +49,14 @@ public class AuthRepository : IAuthRepository
         return null;
     }
 
-    public async Task<Admin?> GetAdminByUsernameOrEmailAsync(string usernameOrEmail)
-    {
+        public async Task<Admin> GetAdminByUsernameOrEmailAsync(string usernameOrEmail)
+        {
         using var connection = _databaseContext.CreateConnection();
+            
+                await connection.OpenAsync();
 
-        const string query = @"
-                SELECT a.id, a.person_id, a.username, a.password, a.profile_image, a.update_date, a.status, p.email
+                const string query = @"
+                SELECT a.id, a.person_id, a.username, a.password, a.profile_image, a.update_date, a.status, a.role
                 FROM admin a
                 JOIN person p ON a.person_id = p.id
                 WHERE a.username = @usernameOrEmail OR p.email = @usernameOrEmail";
@@ -63,23 +65,25 @@ public class AuthRepository : IAuthRepository
         using var command = new NpgsqlCommand(query, connection);
         command.Parameters.AddWithValue("@usernameOrEmail", usernameOrEmail);
 
-        using var reader = await command.ExecuteReaderAsync();
-        if (await reader.ReadAsync())
-        {
-            return new Admin
-            {
-                Id = reader.GetGuid(0),
-                PersonId = reader.GetGuid(1),
-                Username = reader.GetString(2),
-                Password = reader.GetString(3),
-                Profile_Image_URL = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
-                UpdateDate = reader.GetDateTime(5),
-                AccountStatus = (AccountStatus)reader.GetInt16(6),
-                Email = reader.GetString(7)
-            };
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return new Admin
+                            {
+                                Id = reader.GetGuid(0),
+                                PersonId = reader.GetGuid(1),
+                                Username = reader.GetString(2),
+                                Password = reader.GetString(3),
+                                Profile_Image_URL = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
+                                UpdateDate = reader.GetDateTime(4),
+                                AccountStatus = (AccountStatus)reader.GetInt16(5),
+                            };
+                        }
+                    }
+             
+            return null;
         }
-        return null;
-    }
 
     public async Task<bool> UsernameExistsAsync(string username)
     {
@@ -105,8 +109,13 @@ public class AuthRepository : IAuthRepository
         using var command = new NpgsqlCommand(query, connection);
         command.Parameters.AddWithValue("@email", email);
 
-        var count = (long)await command.ExecuteScalarAsync();
-        return count > 0;
+        object result = await command.ExecuteScalarAsync();
+        if (result == null || result == DBNull.Value)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public async Task<Guid> CreatePersonAsync(Person person)
