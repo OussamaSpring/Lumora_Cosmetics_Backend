@@ -1,6 +1,15 @@
-@API_HostAddress = http://localhost:5041
-
-GET {{API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
+### Create Product
+POST http://localhost:5041/api/product
+Content-Type: application/json
+{
+  "name": "Luminous Glow Cream",
+  "brand": "Lumora",
+  "about": "Brightens and hydrates skin",
+  "ingredients": "Water, Aloe, Vitamin C",
+  "howToUse": "Apply to face twice daily",
+  "gender": 2,
+  "categoryId": 3,
+  "status": 1
+}
+### Get Product by ID
+GET http://localhost:5041/api/product/1

@@ -1,4 +1,4 @@
-﻿
+﻿using Domain.Enums.enVendorVerification;
 
 namespace Application.DTOs.VendorVerificationDTOs
 {

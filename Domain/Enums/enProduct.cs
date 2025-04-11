@@ -1,5 +1,4 @@
-﻿
-namespace Domain.Enums.enProduct;
+﻿namespace Domain.Enums.enProduct;
 
 public enum Gender
 {

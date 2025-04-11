@@ -1,8 +1,6 @@
 ﻿
 using Npgsql;
 using Infrastructure.Persistence;
-
-
 using Domain.Entities.AccountRelated;
 using Domain.Enums.enAccount;
 using Application.Interfaces;

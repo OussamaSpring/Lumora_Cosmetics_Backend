@@ -1,7 +1,5 @@
 ﻿using Npgsql;
-
 using Application.Interfaces;
-
 using Domain.Entities.VendorVerification;
 
 
