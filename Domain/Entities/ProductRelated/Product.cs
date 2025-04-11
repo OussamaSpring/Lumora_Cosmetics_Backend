@@ -1,7 +1,4 @@
-﻿
-
-using Domain.Enums.enProduct;
-
+﻿using Domain.Enums.Product;
 
 namespace Domain.Entities.ProductRelated;
 public class Product
