@@ -1,9 +1,7 @@
-﻿
-
-using Application.DTOs;
+﻿using Application.DTOs;
 using Domain.Entities.AccountRelated;
 
-namespace Application.Interfaces
+namespace Application.Interfaces.Repositories
 {
     public interface IUserProfileRepository
     {
@@ -13,5 +11,11 @@ namespace Application.Interfaces
         Task<bool> EmailExistsAsync(string email, Guid? excludedUserId = null);
         Task<bool> PhoneNumberExistsAsync(string phoneNumber, Guid? excludedUserId = null);
 
+
+        Task<IEnumerable<Address>> GetUserAddressesAsync(Guid userId);
+        Task<Address?> GetAddressAsync(int addressId);
+        Task<int> AddAddressAsync(Guid userId, AddressDTO newAddress);
+        Task UpdateAddressAsync(int addressId, AddressDTO address);
+        Task DeleteAddressAsync(int addressId);
     }
 }

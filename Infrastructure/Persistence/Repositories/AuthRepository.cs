@@ -17,7 +17,7 @@ public class AuthRepository : IAuthRepository
 
     public async Task<User?> GetUserByUsernameOrEmailAsync(string usernameOrEmail)
     {
-        using var connection = _databaseContext.CreateConnection();
+                using var connection = _databaseContext.CreateConnection();
 
                 const string query = @"
                 SELECT u.id, u.person_id, u.username, u.password, u.profile_image, u.update_date, u.status, u.role
@@ -25,9 +25,9 @@ public class AuthRepository : IAuthRepository
                 JOIN person p ON u.person_id = p.id
                 WHERE u.username = @usernameOrEmail OR p.email = @usernameOrEmail";
 
-        await connection.OpenAsync();
-        using var command = new NpgsqlCommand(query, connection);
-        command.Parameters.AddWithValue("@usernameOrEmail", usernameOrEmail);
+                await connection.OpenAsync();
+                using var command = new NpgsqlCommand(query, connection);
+                command.Parameters.AddWithValue("@usernameOrEmail", usernameOrEmail);
 
                     using (var reader = await command.ExecuteReaderAsync())
                     {
@@ -38,23 +38,23 @@ public class AuthRepository : IAuthRepository
                             PersonId = reader.GetGuid(1),
                             Username = reader.GetString(2),
                             Password = reader.GetString(3),
-                            Profile_Image_URL = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
+                            ProfileImageUrl = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
                             UpdateDate = reader.GetDateTime(5),
                             AccountStatus = (AccountStatus)reader.GetInt16(6),
                             Role = (UserRole)reader.GetInt16(7)
                             };
                         }
                     }
-                }
-            }
+                
+            
 
         return null;
     }
 
         public async Task<Admin> GetAdminByUsernameOrEmailAsync(string usernameOrEmail)
         {
-            using (var connection = DatabaseContext.CreateConnection())
-            {
+        using var connection = _databaseContext.CreateConnection();
+            
                 await connection.OpenAsync();
 
                 const string query = @"
@@ -83,8 +83,7 @@ public class AuthRepository : IAuthRepository
                             };
                         }
                     }
-                }
-            }
+             
             return null;
         }
 
