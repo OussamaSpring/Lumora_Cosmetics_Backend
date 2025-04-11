@@ -1,21 +1,23 @@
 ﻿using Domain.Enums.Account;
+using Domain.Shared;
 
 namespace Domain.Entities.AccountRelated;
 
-public class User : Person
+public class User
 {
-    public Guid Id { get; set; }
-    public Guid PersonId { get; set; }
+    public Guid UserId { get; set; }
+    public string Email { get; set; }
     public string Username { get; set; }
-    public string Password { get; set; }
+    public string Password { get; set => HasherSHA256.Hash(value); }
     public string? ProfileImageUrl { get; set; }
     public DateTime UpdateDate { get; set; }
     public DateTime? CloseDate { get; set; }
     public AccountStatus AccountStatus { get; set; }
     public UserRole Role { get; set; }
+    public Guid PersonId { get; set; }
 
-    public bool validPassword(string password)
+    public bool validPassword(string _password)
     {
-        return true;
+        return string.Compare(Password, HasherSHA256.Hash(_password), false) == 0;
     }
 }
