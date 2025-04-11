@@ -20,7 +20,7 @@ public class AuthRepository : IAuthRepository
         using var connection = _databaseContext.CreateConnection();
 
         const string query = @"
-                SELECT u.id, u.person_id, u.username, u.password, u.profile_image, u.update_date, u.status, u.role
+                SELECT u.id, u.person_id, u.username, u.password, u.profile_image, u.update_date, u.status, u.role, p.email
                 FROM ""user"" u
                 JOIN person p ON u.person_id = p.id
                 WHERE u.username = @usernameOrEmail OR p.email = @usernameOrEmail";
@@ -41,7 +41,8 @@ public class AuthRepository : IAuthRepository
                 ProfileImageUrl = reader.GetValue(4) == DBNull.Value ? reader.GetString(4) : null,
                 UpdateDate = reader.GetDateTime(5),
                 AccountStatus = (AccountStatus)reader.GetInt16(6),
-                Role = (UserRole)reader.GetInt16(7)
+                Role = (UserRole)reader.GetInt16(7),
+                Email = reader.GetString(8)
             };
         }
 
@@ -53,7 +54,7 @@ public class AuthRepository : IAuthRepository
         using var connection = _databaseContext.CreateConnection();
 
         const string query = @"
-                SELECT a.id, a.person_id, a.username, a.password, a.profile_image, a.update_date, a.status, a.role
+                SELECT a.id, a.person_id, a.username, a.password, a.profile_image, a.update_date, a.status, p.email
                 FROM admin a
                 JOIN person p ON a.person_id = p.id
                 WHERE a.username = @usernameOrEmail OR p.email = @usernameOrEmail";
@@ -72,8 +73,9 @@ public class AuthRepository : IAuthRepository
                 Username = reader.GetString(2),
                 Password = reader.GetString(3),
                 Profile_Image_URL = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
-                UpdateDate = reader.GetDateTime(4),
-                AccountStatus = (AccountStatus)reader.GetInt16(5),
+                UpdateDate = reader.GetDateTime(5),
+                AccountStatus = (AccountStatus)reader.GetInt16(6),
+                Email = reader.GetString(7)
             };
         }
         return null;
