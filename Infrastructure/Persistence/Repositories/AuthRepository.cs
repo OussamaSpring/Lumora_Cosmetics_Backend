@@ -17,37 +17,52 @@ public class AuthRepository : IAuthRepository
 
     public async Task<User?> GetUserByUsernameOrEmailAsync(string usernameOrEmail)
     {
-                using var connection = _databaseContext.CreateConnection();
+        using (var connection = _databaseContext.CreateConnection())
+        {
+            await connection.OpenAsync();
 
-                const string query = @"
-                SELECT u.id, u.person_id, u.username, u.password, u.profile_image, u.update_date, u.status, u.role, p.email
+            const string query = @"
+                SELECT 
+                    u.id, u.username, u.password, u.profile_image,
+                    u.status, u.role,
+                    p.first_name, p.last_name,
+                    p.date_of_birth, p.gender, p.email, p.phone_number,
+                    p. create_date, p.update_date
                 FROM ""user"" u
                 JOIN person p ON u.person_id = p.id
-                WHERE u.username = @usernameOrEmail OR p.email = @usernameOrEmail";
+                WHERE u.username = @usernameOrEmail OR
+                      p.email = @usernameOrEmail";
 
-                await connection.OpenAsync();
-                using var command = new NpgsqlCommand(query, connection);
+            using (var command = new NpgsqlCommand(query, connection))
+            {
                 command.Parameters.AddWithValue("@usernameOrEmail", usernameOrEmail);
 
-                    using (var reader = await command.ExecuteReaderAsync())
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
                     {
-                        if (await reader.ReadAsync())
+                        return new User
                         {
-                            return new User { 
                             Id = reader.GetGuid(0),
-                            PersonId = reader.GetGuid(1),
-                            Username = reader.GetString(2),
-                            Password = reader.GetString(3),
-                            ProfileImageUrl = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
-                            UpdateDate = reader.GetDateTime(5),
-                            AccountStatus = (AccountStatus)reader.GetInt16(6),
-                            Role = (UserRole)reader.GetInt16(7)
-                            };
-                        }
+                            Username = reader.GetString(1),
+                            Password = reader.GetString(2),
+                            ProfileImageUrl = reader.GetValue(3) != DBNull.Value ? reader.GetString(3) : null,
+                            AccountStatus = (AccountStatus)reader.GetInt16(4),
+                            Role = (UserRole)reader.GetInt16(5),
+                            FirstName = reader.GetString(6),
+                            LastName = reader.GetString(7),
+                            DateOfBirth = reader.GetValue(8) != DBNull.Value ? reader.GetDateTime(8) : null,
+                            Gender = reader.GetString(9).Equals("Male") ? Gender.Male :
+                                     (reader.GetString(9).Equals("Female") ? Gender.Female : Gender.Unknown),
+                            Email = reader.GetString(10),
+                            PhoneNumber = reader.GetValue(11) != DBNull.Value ? reader.GetInt64(11) : null,
+                            CreateDate = reader.GetDateTime(12),
+                            UpdateDate = reader.GetDateTime(13)
+                        };
                     }
-                
-            
-
+                }
+            }
+        }
         return null;
     }
 
