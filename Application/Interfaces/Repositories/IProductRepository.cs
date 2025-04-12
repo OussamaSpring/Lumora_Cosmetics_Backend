@@ -25,8 +25,4 @@ public interface IProductRepository
     Task<int> AddProductItemImageAsync(int productItemId, ProductImage image);
 
     Task<bool> DeleteProductImageAsync(int imageId); // just delete the image from images table
-    /* before calling this function (if you want to delete the image from product item)
-        you have to update it first and put null in the image id column
-        then call this function to delete the image from images table
-     */
 }
