@@ -208,12 +208,14 @@ public class UserProfileRepository : IUserProfileRepository
 
         const string query2 = @"UPDATE ""user"" u
                            SET username = @username,
+                                 password = @password,
                                update_date = CURRENT_TIMESTAMP
                            WHERE id = @userId";
 
         using var command2 = new NpgsqlCommand(query2, connection);
         command2.Parameters.AddWithValue("@userId", userId);
         command2.Parameters.AddWithValue("@username", profile.Username);
+        command2.Parameters.AddWithValue("@password", profile.Password);
         await command2.ExecuteNonQueryAsync();
 
     }
@@ -237,30 +239,6 @@ public class UserProfileRepository : IUserProfileRepository
             }
         }
     }
-
-
-    public async Task UpdatePasswordAsync(Guid userId, string newPassword)
-    {
-        using (var connection = _databaseContext.CreateConnection())
-        {
-            await connection.OpenAsync();
-
-            const string query = @"
-                UPDATE ""user""
-                SET password = @passowrd, update_date = CURRENT_TIMESTAMP
-                WHERE id = @userId";
-
-            using (var command = new NpgsqlCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@userId", userId);
-                command.Parameters.AddWithValue("@passowrd", newPassword);
-
-                await command.ExecuteNonQueryAsync();
-            }
-        }
-    }
-
-
 
     public async Task UpdateAddressAsync(int addressId, Address address)
     {
