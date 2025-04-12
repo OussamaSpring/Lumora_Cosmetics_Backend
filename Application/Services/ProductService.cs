@@ -94,12 +94,53 @@ namespace Application.Services
 
         public async Task<ProductDto> GetProductByIdAsync(int id)
         {
-            // Fetch the product by id from the repository
-            var product = await _productRepository.GetByIdAsync(id)
-                ?? throw new NotFoundException($"Product {id} not found.");
+            try 
+            {
+                // Fetch the product with all its related items from the repository
+                var product = await _productRepository.GetByIdWithDetailsAsync(id)?? throw new NotFoundException($"Product {id} not found.");
 
-            // Return the mapped ProductDto
-            return MapToDto(product);
+                // Map to a more detailed DTO that includes all related data
+                return new ProductDetailDto
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    Brand = product.Brand,
+                    About = product.About,
+                    Ingredients = product.Ingredients,
+                    HowToUse = product.HowToUse,
+                    Gender = product.Gender,
+                    CategoryId = product.CategoryId,
+                    Status = product.Status,
+                    // Map product items with their details
+                    ProductItems = product.ProductItems?.Select(item => new ProductItemDto
+                    {
+                        Id = item.Id,
+                        ProductCode = item.ProductCode,
+                        OriginalPrice = item.OriginalPrice,
+                        SalePrice = item.SalePrice,
+                        ItemVariants = JsonSerializer.Deserialize<List<VariantDto>>(item.ItemVariants),
+                        // Map stock information
+                        Stock = new StockDto
+                        {
+                            Id = item.Stock.Id,
+                            Quantity = item.Stock.Quantity,
+                            Status = item.Stock.Status
+                        },
+                        // Map image information
+                        Image = new ProductImageDto
+                        {
+                            Id = item.ImageId,
+                            ImageUrl = item.ProductImage.ImageUrl,
+                            IsPrimary = item.ProductImage.IsPrimary
+                        }
+                    }).ToList()
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error while fetching product with ID {id}: {ex.Message}");
+                throw new ProductServiceException($"An error occurred while fetching the product with ID {id}.", ex);
+            }
         }
 
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
