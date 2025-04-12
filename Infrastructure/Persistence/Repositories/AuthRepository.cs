@@ -19,71 +19,38 @@ public class AuthRepository : IAuthRepository
     {
                 using var connection = _databaseContext.CreateConnection();
 
-        const string query = @"
-                SELECT u.id, u.person_id, u.username, u.password,
-                u.profile_image, u.update_date, u.status, u.role, p.email
+                const string query = @"
+                SELECT u.id, u.person_id, u.username, u.password, u.profile_image, u.update_date, u.status, u.role, p.email
                 FROM ""user"" u
                 JOIN person p ON u.person_id = p.id
                 WHERE u.username = @usernameOrEmail OR p.email = @usernameOrEmail";
 
-        await connection.OpenAsync();
-        using var command = new NpgsqlCommand(query, connection);
-        command.Parameters.AddWithValue("@usernameOrEmail", usernameOrEmail);
-        using var reader = await command.ExecuteReaderAsync();
-        if (await reader.ReadAsync())
-        {
-            return new User
-            {
-                Id = reader.GetGuid(0),
-                PersonId = reader.GetGuid(1),
-                Username = reader.GetString(2),
-                Password = reader.GetString(3),
-                ProfileImageUrl = reader.IsDBNull(4) ? null : reader.GetString(4),
-                UpdateDate = reader.GetDateTime(5),
-                AccountStatus = (AccountStatus)reader.GetInt16(6),
-                Role = (UserRole)reader.GetInt16(7),
-                Email = reader.GetString(8)
-            };
-        }
-
-        return null;
-    }
-
-        public async Task<Admin> GetAdminByUsernameOrEmailAsync(string usernameOrEmail)
-        {
-        using var connection = _databaseContext.CreateConnection();
-            
                 await connection.OpenAsync();
-
-                const string query = @"
-                SELECT a.id, a.person_id, a.username, a.password, a.profile_image, a.update_date, a.status, a.role
-                FROM admin a
-                JOIN person p ON a.person_id = p.id
-                WHERE a.username = @usernameOrEmail OR p.email = @usernameOrEmail";
-
-        await connection.OpenAsync();
-        using var command = new NpgsqlCommand(query, connection);
-        command.Parameters.AddWithValue("@usernameOrEmail", usernameOrEmail);
+                using var command = new NpgsqlCommand(query, connection);
+                command.Parameters.AddWithValue("@usernameOrEmail", usernameOrEmail);
 
                     using (var reader = await command.ExecuteReaderAsync())
                     {
                         if (await reader.ReadAsync())
                         {
-                            return new Admin
-                            {
-                                Id = reader.GetGuid(0),
-                                PersonId = reader.GetGuid(1),
-                                Username = reader.GetString(2),
-                                Password = reader.GetString(3),
-                                Profile_Image_URL = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
-                                UpdateDate = reader.GetDateTime(4),
-                                AccountStatus = (AccountStatus)reader.GetInt16(5),
+                            return new User { 
+                            Id = reader.GetGuid(0),
+                            PersonId = reader.GetGuid(1),
+                            Username = reader.GetString(2),
+                            Password = reader.GetString(3),
+                            ProfileImageUrl = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
+                            UpdateDate = reader.GetDateTime(5),
+                            AccountStatus = (AccountStatus)reader.GetInt16(6),
+                            Role = (UserRole)reader.GetInt16(7)
                             };
                         }
                     }
-             
-            return null;
-        }
+                
+            
+
+        return null;
+    }
+
 
     public async Task<bool> UsernameExistsAsync(string username)
     {
@@ -118,45 +85,40 @@ public class AuthRepository : IAuthRepository
         return true;
     }
 
-    public async Task<Guid> CreatePersonAsync(Person person)
-    {
-        // When first signup we only store these basic information of person (firstname, lastname, email)
-        using var connection = _databaseContext.CreateConnection();
-
-        const string query = @"
-                INSERT INTO person (first_name, last_name, email)
-                VALUES (@firstName, @lastName, @email)
-                RETURNING id";
-
-        await connection.OpenAsync();
-        using var command = new NpgsqlCommand(query, connection);
-        command.Parameters.AddWithValue("@firstName", person.FirstName);
-        command.Parameters.AddWithValue("@lastName", person.LastName);
-        command.Parameters.AddWithValue("@email", person.Email);
-
-        return (Guid)await command.ExecuteScalarAsync();
-    }
-
+    
     public async Task<Guid> CreateUserAsync(User user)
     {
         using var connection = _databaseContext.CreateConnection();
+        await connection.OpenAsync();
 
-        const string query = @"
-                INSERT INTO ""user"" (person_id, username, password, status, role)
-                VALUES (@personId, @username, @password, @status, @role) 
+        const string query1 = @"
+                INSERT INTO person (first_name, last_name, email)
+                VALUES (@firstName, @lastName, @email) 
+                RETURNING id";
+
+        using var command1 = new NpgsqlCommand(query1, connection);
+
+        command1.Parameters.AddWithValue("@firstName", user.FirstName);
+        command1.Parameters.AddWithValue("@lastName", user.LastName);
+        command1.Parameters.AddWithValue("@email", user.Email);
+
+        var personId = (Guid)await command1.ExecuteScalarAsync();
+
+        user.Id = personId;
+
+        const string query2 = @"
+                INSERT INTO ""user"" (id, person_id, username, password, status, role)
+                VALUES (@userId, @personId, @username, @password, @status, @role) 
                 RETURNING id";
 
         await connection.OpenAsync();
-        using var command = new NpgsqlCommand(query, connection);
-        command.Parameters.AddWithValue("@personId", user.PersonId);
+        using var command = new NpgsqlCommand(query2, connection);
+        command.Parameters.AddWithValue("@userId", user.Id);
+        command.Parameters.AddWithValue("@personId", user.Id);
         command.Parameters.AddWithValue("@username", user.Username);
         command.Parameters.AddWithValue("@password", user.Password);
         command.Parameters.AddWithValue("@role", (int)user.Role);
-
-        if (user.Role.Equals(UserRole.Vendor))
-            command.Parameters.AddWithValue("@status", (int)AccountStatus.Pending);
-        else
-            command.Parameters.AddWithValue("@status", (int)AccountStatus.Active);
+        command.Parameters.AddWithValue("@status", (int)user.AccountStatus);
 
 
         return (Guid)await command.ExecuteScalarAsync();
@@ -194,4 +156,42 @@ public class AuthRepository : IAuthRepository
 
         return username;
     }
+    public async Task<Admin> GetAdminByUsernameOrEmailAsync(string usernameOrEmail)
+        {
+        using var connection = _databaseContext.CreateConnection();
+            
+                await connection.OpenAsync();
+
+                const string query = @"
+                SELECT a.id, a.person_id, a.username, a.password, a.profile_image, a.update_date, a.status, a.role
+                FROM admin a
+                JOIN person p ON a.person_id = p.id
+                WHERE a.username = @usernameOrEmail OR p.email = @usernameOrEmail";
+
+        await connection.OpenAsync();
+        using var command = new NpgsqlCommand(query, connection);
+        command.Parameters.AddWithValue("@usernameOrEmail", usernameOrEmail);
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return new Admin
+                            {
+                                Id = reader.GetGuid(0),
+                                PersonId = reader.GetGuid(1),
+                                Username = reader.GetString(2),
+                                Password = reader.GetString(3),
+                                Profile_Image_URL = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
+                                UpdateDate = reader.GetDateTime(4),
+                                AccountStatus = (AccountStatus)reader.GetInt16(5),
+                            };
+                        }
+                    }
+             
+            return null;
+        }
+
+
+
 }
