@@ -3,6 +3,7 @@ using Application.Interfaces;
 using Domain;
 using Domain.Entities.ProductRelated;
 using Microsoft.Extensions.Logging;
+using Domain.Enums.enProduct;
 
 namespace Application.Services
 {
@@ -20,6 +21,7 @@ namespace Application.Services
         public async Task<ProductDto> CreateProductAsync(CreateProductDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
+
             try
             {
                 var product = new Product
@@ -29,23 +31,33 @@ namespace Application.Services
                     About = dto.About,
                     Ingredients = dto.Ingredients,
                     HowToUse = dto.HowToUse,
-                    Gender = dto.Gender, // Gender can be nullable and is handled here
-                    CategoryId = dto.CategoryId,
-                    Status = dto.Status,
+                    Gender = dto.Gender,  // Cast int to Gender enum (nullable)
+                    CategoryId = (short)dto.CategoryId, // Cast int to short
+                    StatusId = (short)dto.Status, // Cast int to short
                     CreateDate = DateTime.UtcNow,
                     UpdateDate = DateTime.UtcNow
                 };
 
-                // Create the product in the repository
-                await _productRepository.CreateAsync(product);
+                var productItems = dto.ProductItems.Select(item => new ProductItem
+                {
+                    ProductCode = item.ProductCode,
+                    OriginalPrice = item.OriginalPrice,
+                    SalePrice = item.SalePrice,
+                    ItemVariants = item.ItemVariants,
+                    ImageId = item.ImageId,
+                    StockId = item.StockId,
+                    CreateDate = DateTime.UtcNow,
+                    UpdateDate = DateTime.UtcNow
+                }).ToList();
 
-                // Return the mapped ProductDto
+                await _productRepository.CreateWithItemsAsync(product, productItems);
+
                 return MapToDto(product);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error while creating product: {ex.Message}");
-                throw new ProductServiceException("An error occurred while creating the product.", ex);
+                _logger.LogError($"Error while creating product with items: {ex.Message}");
+                throw new ProductServiceException("An error occurred while creating the product and its items.", ex);
             }
         }
 
@@ -63,7 +75,12 @@ namespace Application.Services
             product.About = dto.About ?? product.About;
             product.Ingredients = dto.Ingredients ?? product.Ingredients;
             product.HowToUse = dto.HowToUse ?? product.HowToUse;
-            product.Gender = dto.Gender ?? product.Gender;
+
+            // Handle Gender assignment properly (nullable enum)
+            if (dto.Gender != 0)  // assuming 0 is the default or "empty" value for Gender
+            {
+                product.Gender = dto.Gender;
+            }
             product.CategoryId = dto.CategoryId ?? product.CategoryId;
             product.Status = dto.Status ?? product.Status;
             product.UpdateDate = DateTime.UtcNow; // Set the update date
@@ -105,7 +122,7 @@ namespace Application.Services
                 About = product.About,
                 Ingredients = product.Ingredients,
                 HowToUse = product.HowToUse,
-                Gender = product.Gender, // Ensure ProductDto.Gender is nullable (Gender?)
+                Gender = product.Gender,  // Gender is nullable in ProductDto as well
                 CategoryId = product.CategoryId,
                 Status = product.Status
             };

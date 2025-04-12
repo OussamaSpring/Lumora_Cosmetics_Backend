@@ -1,15 +1,17 @@
-﻿using Domain.Enums.enProduct;
-namespace Application.DTOs.Product
+﻿using Application.DTOs.ProductItem;
+
+namespace Application.DTOs.Product;
+
+public class CreateProductDto
 {
-    public class CreateProductDto
-    {
-        public string Name { get; set; }
-        public string? Brand { get; set; }
-        public string? About { get; set; }
-        public string? Ingredients { get; set; }
-        public string? HowToUse { get; set; }
-        public Gender? Gender { get; set; }
-        public short CategoryId { get; set; }
-        public ProductStatus Status { get; set; }
-    }
+    public string Name { get; set; }
+    public string Brand { get; set; }
+    public string About { get; set; }
+    public string Ingredients { get; set; }
+    public string HowToUse { get; set; }
+    public int Gender { get; set; }
+    public int CategoryId { get; set; }
+    public int Status { get; set; }
+
+    public List<CreateProductItemDto> ProductItems { get; set; }
 }

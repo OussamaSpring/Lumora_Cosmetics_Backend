@@ -54,4 +54,14 @@ public class ProductRepository : IProductRepository
     {
         throw new NotImplementedException();
     }
+
+    public Task CreateWithItemsAsync(Product product, List<ProductItem> productItems)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task IProductRepository.UpdateAsync(Product product)
+    {
+        return UpdateAsync(product);
+    }
 }
