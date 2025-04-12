@@ -8,7 +8,6 @@ public interface IAuthRepository
     Task<Admin?> GetAdminByUsernameOrEmailAsync(string usernameOrEmail);
     Task<bool> UsernameExistsAsync(string username);
     Task<bool> EmailExistsAsync(string email);
-    Task<Guid> CreatePersonAsync(Person person);
     Task<Guid> CreateUserAsync(User user);
 
     // this return username if successfully generated, if not, it throws an Exception

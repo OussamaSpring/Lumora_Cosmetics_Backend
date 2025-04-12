@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using Application.Interfaces.Services;
+using Domain.Enums.Account;
 using Domain.Shared;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,7 +25,7 @@ public class RegisterController : ControllerBase
             return BadRequest(Result<string>.Failure(new Error("Register request input", "Invalid")));
         }
 
-        var result = _userAuthentication.Register(registerRequest);
+        var result = _userAuthentication.Register(registerRequest, UserRole.Customer);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 }

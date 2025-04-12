@@ -25,7 +25,7 @@ public class UserProfileRepository : IUserProfileRepository
 
     #region AddData
     
-    public async Task<int> AddAddressAsync(Guid userID, AddressDTO newAddress)
+    public async Task<int> AddAddressAsync(Guid userID, Address newAddress)
     {
         using var connection = _databaseContext.CreateConnection();
         const string query1 = @"INSERT INTO address
@@ -39,7 +39,7 @@ public class UserProfileRepository : IUserProfileRepository
         command1.Parameters.AddWithValue("@city", newAddress.City);
         command1.Parameters.AddWithValue("@postal_code", newAddress.PostalCode);
         command1.Parameters.AddWithValue("@street", newAddress.Street);
-        command1.Parameters.AddWithValue("@addiontal_info", newAddress.AdditionalInfo ?? string.Empty); // Handle null
+        command1.Parameters.AddWithValue("@addiontal_info", newAddress.AdditionalInfo ?? string.Empty);
 
         int newAddressId = (int)await command1.ExecuteScalarAsync();
 
@@ -63,7 +63,7 @@ public class UserProfileRepository : IUserProfileRepository
 
 
     #region GetData
-    public async Task<User> GetProfileAsync(Guid userId)
+    public async Task<User?> GetProfileAsync(Guid userId)
     {
         using (var connection = _databaseContext.CreateConnection())
         {
@@ -71,7 +71,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             const string query = @"
                 SELECT 
-                    u.id, p.id, u.username, u.password, u.profile_image,
+                    u.id, u.username, u.password, u.profile_image,
                     u.status, u.role,
                     p.first_name, p.last_name,
                     p.date_of_birth, p.gender, p.email, p.phone_number,
@@ -91,20 +91,20 @@ public class UserProfileRepository : IUserProfileRepository
                         return new User
                         {
                             Id = reader.GetGuid(0),
-                            PersonId = reader.GetGuid(1),
-                            Username = reader.GetString(2),
-                            Password = reader.GetString(3),
-                            ProfileImageUrl = reader.GetValue(4) != DBNull.Value ? reader.GetString(4) : null,
-                            AccountStatus = (AccountStatus)reader.GetInt16(6),
-                            Role = (UserRole)reader.GetInt16(7),
-                            FirstName = reader.GetString(8),
-                            LastName = reader.GetString(9),
-                            DateOfBirth = reader.GetValue(10) != DBNull.Value ? reader.GetDateTime(10) : null,
-                            Gender = reader.GetString(10).Equals("Male") ? Gender.Male : (reader.GetString(10).Equals("Male") ? Gender.Female : Gender.Unknown),
-                            Email = reader.GetString(11),
-                            PhoneNumber = reader.GetValue(12) != DBNull.Value ? reader.GetInt32(12) : null,
-                            CreateDate = reader.GetDateTime(13),
-                            UpdateDate = reader.GetDateTime(14)
+                            Username = reader.GetString(1),
+                            Password = reader.GetString(2),
+                            ProfileImageUrl = reader.GetValue(3) != DBNull.Value ? reader.GetString(3) : null,
+                            AccountStatus = (AccountStatus)reader.GetInt16(4),
+                            Role = (UserRole)reader.GetInt16(5),
+                            FirstName = reader.GetString(6),
+                            LastName = reader.GetString(7),
+                            DateOfBirth = reader.GetValue(8) != DBNull.Value ? reader.GetDateTime(8) : null,
+                            Gender = reader.GetString(9).Equals("Male") ? Gender.Male :
+                                     (reader.GetString(9).Equals("Female") ? Gender.Female : Gender.Unknown),
+                            Email = reader.GetString(10),
+                            PhoneNumber = reader.GetValue(11) != DBNull.Value ? reader.GetInt64(11) : null,
+                            CreateDate = reader.GetDateTime(12),
+                            UpdateDate = reader.GetDateTime(13)
                         };
                     }
                 }
@@ -176,10 +176,9 @@ public class UserProfileRepository : IUserProfileRepository
 
 
     #region UpdateData
-    public async Task UpdateProfileAsync(Guid userId, ProfileUpdateDto profile)
+    public async Task UpdateProfileAsync(Guid userId, User profile)
     {
-        using (var connection = _databaseContext.CreateConnection())
-        {
+        using var connection = _databaseContext.CreateConnection();
             await connection.OpenAsync();
 
             const string query = @"
@@ -195,8 +194,8 @@ public class UserProfileRepository : IUserProfileRepository
                 FROM ""user"" u
                 WHERE u.person_id = p.id AND u.id = @userId";
 
-            using (var command = new NpgsqlCommand(query, connection))
-            {
+            using var command = new NpgsqlCommand(query, connection);
+            
                 command.Parameters.AddWithValue("@userId", userId);
                 command.Parameters.AddWithValue("@firstName", profile.FirstName);
                 command.Parameters.AddWithValue("@lastName", profile.LastName);
@@ -206,8 +205,19 @@ public class UserProfileRepository : IUserProfileRepository
                 command.Parameters.AddWithValue("@phone", (object)profile.PhoneNumber ?? DBNull.Value);
 
                 await command.ExecuteNonQueryAsync();
-            }
-        }
+
+        const string query2 = @"UPDATE ""user"" u
+                           SET username = @username,
+                                 password = @password,
+                               update_date = CURRENT_TIMESTAMP
+                           WHERE id = @userId";
+
+        using var command2 = new NpgsqlCommand(query2, connection);
+        command2.Parameters.AddWithValue("@userId", userId);
+        command2.Parameters.AddWithValue("@username", profile.Username);
+        command2.Parameters.AddWithValue("@password", profile.Password);
+        await command2.ExecuteNonQueryAsync();
+
     }
     public async Task UpdateProfileImageAsync(Guid userId, string imageUrl)
     {
@@ -230,31 +240,7 @@ public class UserProfileRepository : IUserProfileRepository
         }
     }
 
-
-    public async Task UpdatePasswordAsync(Guid userId, string newPassword)
-    {
-        using (var connection = _databaseContext.CreateConnection())
-        {
-            await connection.OpenAsync();
-
-            const string query = @"
-                UPDATE ""user""
-                SET password = @passowrd, update_date = CURRENT_TIMESTAMP
-                WHERE id = @userId";
-
-            using (var command = new NpgsqlCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@userId", userId);
-                command.Parameters.AddWithValue("@passowrd", newPassword);
-
-                await command.ExecuteNonQueryAsync();
-            }
-        }
-    }
-
-
-
-    public async Task UpdateAddressAsync(int addressId, AddressDTO address)
+    public async Task UpdateAddressAsync(int addressId, Address address)
     {
         using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
@@ -307,69 +293,5 @@ public class UserProfileRepository : IUserProfileRepository
 
 
     #region CheckData
-    public async Task<bool> EmailExistsAsync(string email, Guid? excludedUserId = null)
-    {
-        using (var connection = _databaseContext.CreateConnection())
-        {
-            await connection.OpenAsync();
-
-            var query = @"
-                SELECT COUNT(1) 
-                FROM person p
-                JOIN ""user"" u ON p.id = u.person_id
-                WHERE p.email = @email";
-
-            if (excludedUserId.HasValue)
-            {
-                query += " AND u.id != @excludedUserId";
-            }
-
-            using (var command = new NpgsqlCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@email", email);
-                if (excludedUserId.HasValue)
-                {
-                    command.Parameters.AddWithValue("@excludedUserId", excludedUserId.Value);
-                }
-
-                var count = (long)await command.ExecuteScalarAsync();
-                return count > 0;
-            }
-        }
-    }
-
-
-    public async Task<bool> PhoneNumberExistsAsync(string phoneNumber, Guid? excludedUserId = null)
-    {
-        using (var connection = _databaseContext.CreateConnection())
-        {
-            await connection.OpenAsync();
-
-            var query = @"
-                SELECT COUNT(1) 
-                FROM person p
-                JOIN ""user"" u ON p.id = u.person_id
-                WHERE p.phone_number = @phone";
-
-            if (excludedUserId.HasValue)
-            {
-                query += " AND u.id != @excludedUserId";
-            }
-
-            using (var command = new NpgsqlCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@phone", phoneNumber);
-                if (excludedUserId.HasValue)
-                {
-                    command.Parameters.AddWithValue("@excludedUserId", excludedUserId.Value);
-                }
-
-                var count = (long)await command.ExecuteScalarAsync();
-                return count > 0;
-            }
-        }
-    }
     #endregion
-
-
 }
