@@ -13,7 +13,6 @@ namespace Application.Interfaces.Repositories
         
         Task UpdateProfileAsync(Guid userId, User profile); // update all user data except password and image
         Task UpdateProfileImageAsync(Guid userId, string imageUrl);
-        Task UpdatePasswordAsync(Guid userId, string newPassword);
         Task UpdateAddressAsync(int addressId, Address address);
 
 
