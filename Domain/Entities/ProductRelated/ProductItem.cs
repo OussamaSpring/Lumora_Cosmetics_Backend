@@ -4,12 +4,12 @@ public class ProductItem
 {
     public int Id { get; set; }
     public int ProductId { get; set; }
-    public string ProductCode { get; set; }
+    public string? ProductCode { get; set; }
     public decimal OriginalPrice { get; set; }
     public decimal? SalePrice { get; set; }
     public DateTime CreateDate { get; set; }
     public DateTime UpdateDate { get; set; }
-    public string ItemVariants { get; set; } // I'm not sure of the type as it is stored as JSON in the database
-    public int ImageId { get; set; } // I still not sure how to do this (need discussion)
-    public int StockId { get; set; }
+    public Dictionary<string, string>? Variants { get; set; } // for JSON (I used strings for easy implementation)
+    public int? ImageId { get; set; }
+    public Stock? Stock { get; set; }
 }

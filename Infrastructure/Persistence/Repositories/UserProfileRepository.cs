@@ -24,7 +24,7 @@ public class UserProfileRepository : IUserProfileRepository
 
 
     #region AddData
-    
+
     public async Task<int> AddAddressAsync(Guid userID, Address newAddress)
     {
         using var connection = _databaseContext.CreateConnection();
@@ -129,7 +129,7 @@ public class UserProfileRepository : IUserProfileRepository
         {
             addresses.Add(new Address
             {
-                Id =  reader.GetInt32(0),
+                Id = reader.GetInt32(0),
                 State = reader.GetString(1),
                 City = reader.GetString(2),
                 PostalCode = reader.GetString(3),
@@ -179,9 +179,9 @@ public class UserProfileRepository : IUserProfileRepository
     public async Task UpdateProfileAsync(Guid userId, User profile)
     {
         using var connection = _databaseContext.CreateConnection();
-            await connection.OpenAsync();
+        await connection.OpenAsync();
 
-            const string query = @"
+        const string query = @"
                 UPDATE person p
                 SET 
                     first_name = @firstName,
@@ -194,17 +194,17 @@ public class UserProfileRepository : IUserProfileRepository
                 FROM ""user"" u
                 WHERE u.person_id = p.id AND u.id = @userId";
 
-            using var command = new NpgsqlCommand(query, connection);
-            
-                command.Parameters.AddWithValue("@userId", userId);
-                command.Parameters.AddWithValue("@firstName", profile.FirstName);
-                command.Parameters.AddWithValue("@lastName", profile.LastName);
-                command.Parameters.AddWithValue("@dob", (object)profile.DateOfBirth ?? DBNull.Value);
-                command.Parameters.AddWithValue("@gender", (object)profile.Gender ?? DBNull.Value);
-                command.Parameters.AddWithValue("@email", profile.Email);
-                command.Parameters.AddWithValue("@phone", (object)profile.PhoneNumber ?? DBNull.Value);
+        using var command = new NpgsqlCommand(query, connection);
 
-                await command.ExecuteNonQueryAsync();
+        command.Parameters.AddWithValue("@userId", userId);
+        command.Parameters.AddWithValue("@firstName", profile.FirstName);
+        command.Parameters.AddWithValue("@lastName", profile.LastName);
+        command.Parameters.AddWithValue("@dob", (object)profile.DateOfBirth ?? DBNull.Value);
+        command.Parameters.AddWithValue("@gender", (object)profile.Gender ?? DBNull.Value);
+        command.Parameters.AddWithValue("@email", profile.Email);
+        command.Parameters.AddWithValue("@phone", (object)profile.PhoneNumber ?? DBNull.Value);
+
+        await command.ExecuteNonQueryAsync();
 
         const string query2 = @"UPDATE ""user"" u
                            SET username = @username,
