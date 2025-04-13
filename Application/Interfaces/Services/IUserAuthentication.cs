@@ -6,6 +6,6 @@ namespace Application.Interfaces.Services;
 
 public interface IUserAuthentication
 {
-    Result<string?> Login(LoginRequest loginRequest);
-    Result<string?> Register(RegisterRequest registerRequest, UserRole userRole);
+    Task<Result<string?>> Login(LoginRequest loginRequest);
+    Task<Result<string?>> Register(RegisterRequest registerRequest, UserRole userRole);
 }

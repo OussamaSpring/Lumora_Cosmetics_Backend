@@ -18,16 +18,15 @@ public class UserAuthentication : IUserAuthentication
         _tokenProvider = tokenProvider;
     }
 
-    public Result<string?> Login(LoginRequest loginRequest)
+    public async Task<Result<string?>> Login(LoginRequest loginRequest)
     {
         try
         {
-            var user = _authRepository.GetUserByUsernameOrEmailAsync(loginRequest.UsernameOrEmail).Result;
+            var user = await _authRepository.GetUserByUsernameOrEmailAsync(loginRequest.UsernameOrEmail);
             if (user is null)
             {
                 return Result<string>.Failure(new Error("Login", "this user does not exist"));
             }
-
 
             if (!auth(loginRequest, user))
             {
@@ -50,48 +49,44 @@ public class UserAuthentication : IUserAuthentication
         }
     }
 
-    public Result<string?> Register(RegisterRequest registerRequest, UserRole userRole)
+    public async Task<Result<string?>> Register(RegisterRequest registerRequest, UserRole userRole)
     {
         try
         {
-            if (_authRepository.EmailExistsAsync(registerRequest.Email).Result)
-            {
-                return Result<string>.Failure(new Error("Register", "email already using"));
-            }
-            if (_authRepository.UsernameExistsAsync(registerRequest.Username).Result)
+
+            bool userExist = await _authRepository.UsernameExistsAsync(registerRequest.Username);
+            if (userExist)
             {
                 return Result<string>.Failure(new Error("Register", "username already using"));
             }
 
-            var person = new Person
-            {
-                FirstName = registerRequest.FirstName,
-                MiddleName = registerRequest.MiddleName,
-                LastName = registerRequest.LastName,
-                DateOfBirth = registerRequest.DateOfBirth,
-                PhoneNumber = registerRequest.PhoneNumber,
-                Gender = registerRequest.Gender,
-                CreateDate = DateTime.Now,
-                UpdateDate = DateTime.Now,
-            };
-
-            var personId = _authRepository.CreatePersonAsync(person).Result;
-            person.PersonId = personId;
+            //bool emailExist = await _authRepository.EmailExistsAsync(registerRequest.Email);
+            //if (emailExist)
+            //{
+            //    return Result<string>.Failure(new Error("Register", "email already using"));
+            //}
 
             var user = new User
             {
                 Username = registerRequest.Username,
                 Email = registerRequest.Email,
                 Password = HasherSHA256.Hash(registerRequest.Password),
+                FirstName = registerRequest.FirstName,
+                MiddleName = registerRequest.MiddleName,
+                LastName = registerRequest.LastName,
+                DateOfBirth = registerRequest.DateOfBirth,
+                PhoneNumber = registerRequest.PhoneNumber,
+                Gender = registerRequest.Gender,
                 ProfileImageUrl = string.Empty, // profile image (nullable)
                 Role = userRole,
                 AccountStatus = AccountStatus.Active,
+                CreateDate = DateTime.Now,
                 UpdateDate = DateTime.Now,
-                PersonId = personId,
+
             };
 
-            var userId = _authRepository.CreateUserAsync(user).Result;
-            user.UserId = userId;
+            var userId = await _authRepository.CreateUserAsync(user);
+            user.Id = userId;
 
             return Result<string>.Success(_tokenProvider.GenerateToken(user))!;
         }

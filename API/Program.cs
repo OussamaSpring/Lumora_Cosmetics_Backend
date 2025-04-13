@@ -3,6 +3,8 @@ using Application.Interfaces.Services;
 using Application.Services;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Repositories;
+using Infrastructure.Services;
+using Persistence.Repositories;
 
 namespace API;
 
@@ -20,9 +22,14 @@ public class Program
 
 
         builder.Services.AddScoped<IDbContext,  DbContext>();
+        builder.Services.AddScoped<ITokenProvider, JwtTokenProvider>();
+        builder.Services.AddScoped<IImageService, ImageService>();
+
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();
         builder.Services.AddScoped<IUserAuthentication, UserAuthentication>();
-        builder.Services.AddSingleton<ITokenProvider, JwtTokenProvider>();
+        
+        builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+        builder.Services.AddScoped<IUserService, UserService>();
 
 
 
