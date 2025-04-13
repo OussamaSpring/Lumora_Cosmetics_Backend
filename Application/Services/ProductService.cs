@@ -4,6 +4,7 @@ using Domain;
 using Domain.Entities.ProductRelated;
 using Microsoft.Extensions.Logging;
 using Domain.Enums.enProduct;
+using System.Text.Json;
 
 namespace Application.Services
 {
@@ -31,9 +32,9 @@ namespace Application.Services
                     About = dto.About,
                     Ingredients = dto.Ingredients,
                     HowToUse = dto.HowToUse,
-                    Gender = dto.Gender,  // Cast int to Gender enum (nullable)
-                    CategoryId = (short)dto.CategoryId, // Cast int to short
-                    StatusId = (short)dto.Status, // Cast int to short
+                    Gender = dto.Gender,
+                    CategoryId = dto.CategoryId,
+                    Status = dto.Status,
                     CreateDate = DateTime.UtcNow,
                     UpdateDate = DateTime.UtcNow
                 };
@@ -94,10 +95,10 @@ namespace Application.Services
 
         public async Task<ProductDto> GetProductByIdAsync(int id)
         {
-            try 
+            try
             {
                 // Fetch the product with all its related items from the repository
-                var product = await _productRepository.GetByIdWithDetailsAsync(id)?? throw new NotFoundException($"Product {id} not found.");
+                var product = await _productRepository.GetByIdWithDetailsAsync(id) ?? throw new NotFoundException($"Product {id} not found.");
 
                 // Map to a more detailed DTO that includes all related data
                 return new ProductDetailDto
@@ -123,14 +124,14 @@ namespace Application.Services
                         Stock = new StockDto
                         {
                             Id = item.Stock.Id,
-                            Quantity = item.Stock.Quantity,
-                            Status = item.Stock.Status
+                            Quantity = item.Stock.StockQuantity,
+                            Status = item.Stock.Status.ToString()
                         },
                         // Map image information
                         Image = new ProductImageDto
                         {
                             Id = item.ImageId,
-                            ImageUrl = item.ProductImage.ImageUrl,
+                            ImageUrl = item.ProductImage.Url,
                             IsPrimary = item.ProductImage.IsPrimary
                         }
                     }).ToList()

@@ -14,43 +14,7 @@ public class ProductRepository : IProductRepository
         _connectionString = connectionString;
     }
 
-    public async Task<Product> CreateAsync(Product product)
-    {
-        throw new NotImplementedException();
-    }
-
-
-
-
-
-    public async Task<Product?> GetByIdAsync(int id)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<IEnumerable<Product>> GetAllAsync()
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<Product> UpdateAsync(Product product)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<bool> DeleteAsync(int id)
-    {
-        throw new NotImplementedException();
-    }
-
-    // --- Helper Methods ---
-
-    private void AddParameters(NpgsqlCommand cmd, Product product, bool includeId)
-    {
-        throw new NotImplementedException();
-    }
-
-    private Product MapProduct(NpgsqlDataReader reader)
+    public Task<Product> CreateAsync(Product product)
     {
         throw new NotImplementedException();
     }
@@ -60,8 +24,23 @@ public class ProductRepository : IProductRepository
         throw new NotImplementedException();
     }
 
-    Task IProductRepository.UpdateAsync(Product product)
+    public Task<IEnumerable<Product>> GetAllAsync()
     {
-        return UpdateAsync(product);
+        throw new NotImplementedException();
+    }
+
+    public Task<Product?> GetByIdAsync(int id)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Product> GetByIdWithDetailsAsync(int id)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task UpdateAsync(Product product)
+    {
+        throw new NotImplementedException();
     }
 }

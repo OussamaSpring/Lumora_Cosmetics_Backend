@@ -1,5 +1,4 @@
-﻿
-namespace Domain.Entities.ProductRelated;
+﻿namespace Domain.Entities.ProductRelated;
 
 public class ProductItem
 {
@@ -13,4 +12,8 @@ public class ProductItem
     public string ItemVariants { get; set; } // I'm not sure of the type as it is stored as JSON in the database
     public int ImageId { get; set; } // I still not sure how to do this (need discussion)
     public int StockId { get; set; }
+
+    // Navigation properties
+    public Stock Stock { get; set; }
+    public ProductImage ProductImage { get; set; }
 }
