@@ -9,7 +9,11 @@ public class ProductItem
     public decimal? SalePrice { get; set; }
     public DateTime CreateDate { get; set; }
     public DateTime UpdateDate { get; set; }
-    public Dictionary<string, string>? Variants { get; set; } // for JSON (I used strings for easy implementation)
+
+    /* for JSON (I used strings for easy implementation)
+     * NOTE: Key string is name of the variant type     
+     */
+    public Dictionary<string, string>? Variants { get; set; } 
     public int? ImageId { get; set; }
     public Stock? Stock { get; set; }
 }
