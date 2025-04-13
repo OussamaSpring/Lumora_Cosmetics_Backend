@@ -80,7 +80,7 @@ namespace Application.Services
             // Handle Gender assignment properly (nullable enum)
             if (dto.Gender != 0)  // assuming 0 is the default or "empty" value for Gender
             {
-                product.Gender = dto.Gender;
+                product.Gender = (Gender?)dto.Gender;
             }
             product.CategoryId = dto.CategoryId ?? product.CategoryId;
             product.Status = dto.Status ?? product.Status;
@@ -113,7 +113,7 @@ namespace Application.Services
                     CategoryId = product.CategoryId,
                     Status = product.Status,
                     // Map product items with their details
-                    ProductItems = product.ProductItems?.Select(item => new ProductItemDto
+                    ProductItems = product.ProductItems.Select(item => new ProductItemDto
                     {
                         Id = item.Id,
                         ProductCode = item.ProductCode,
