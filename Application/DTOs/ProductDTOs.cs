@@ -9,4 +9,5 @@ namespace Application.DTOs
     class ProductDTOs
     {
     }
+
 }
