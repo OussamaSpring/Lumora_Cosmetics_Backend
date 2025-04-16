@@ -1,29 +1,30 @@
 ﻿using Npgsql;
 
 using System.Text.Json;
+using System.Text;
 
 
 using Application.Interfaces.Repositories;
 using Domain.Entities.ProductRelated;
 using Domain.Enums.Product;
-using System.Text;
+using Application.DTOs;
 
 
 namespace Infrastructure.Persistence.Repositories;
 
 public class ProductRepository : IProductRepository
 {
-    private readonly string _connectionString;
+    private readonly IDbContext _databaseContext;
 
-    public ProductRepository(string connectionString)
+    public ProductRepository(IDbContext databaseContext)
     {
-        _connectionString = connectionString;
+        _databaseContext = databaseContext;
     }
 
 
     #region HelpFunction
 
-    private Product ProductMapper(NpgsqlDataReader reader)
+    private Product MapProduct(NpgsqlDataReader reader)
     {
         return new Product
         {
@@ -43,7 +44,7 @@ public class ProductRepository : IProductRepository
             ImageUrl = reader.IsDBNull(13) ? null : reader.GetString(13)
         };
     }
-    private ProductItem ProductItemMapper(NpgsqlDataReader reader)
+    private ProductItem MapProductItem(NpgsqlDataReader reader)
     {
         return new ProductItem
         {
@@ -81,7 +82,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<Product?> GetProductByIdAsync(int productId)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -101,7 +102,7 @@ public class ProductRepository : IProductRepository
 
         if (await reader.ReadAsync())
         {
-            return ProductMapper(reader);
+            return MapProduct(reader);
         }
 
         return null;
@@ -111,7 +112,7 @@ public class ProductRepository : IProductRepository
     {
         var products = new List<Product>();
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -131,7 +132,7 @@ public class ProductRepository : IProductRepository
 
         while (await reader.ReadAsync())
         {
-            products.Add(ProductMapper(reader));
+            products.Add(MapProduct(reader));
         }
 
         return products;
@@ -139,7 +140,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<ProductItem?> GetProductItemByIdAsync(int productItemId)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -160,7 +161,7 @@ public class ProductRepository : IProductRepository
 
         if (await reader.ReadAsync())
         {
-            return ProductItemMapper(reader);
+            return MapProductItem(reader);
         }
 
         return null;
@@ -169,7 +170,7 @@ public class ProductRepository : IProductRepository
     {
         var items = new List<ProductItem>();
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -190,14 +191,14 @@ public class ProductRepository : IProductRepository
 
         while (await reader.ReadAsync())
         {
-            items.Add(ProductItemMapper(reader));
+            items.Add(MapProductItem(reader));
         }
 
         return items;
     }
     public async Task<ProductImage?> GetProductImageByIdAsync(int imageId)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
         const string query = @"
                 SELECT 
@@ -227,7 +228,7 @@ public class ProductRepository : IProductRepository
     #region AddData
     public async Task<int> CreateProductAsync(Product product)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -257,7 +258,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<int> AddProductImageAsync(ProductImage image)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -281,7 +282,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<int> AddProductItemAsync(ProductItem productItem)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         using var transaction = await connection.BeginTransactionAsync();
@@ -354,7 +355,7 @@ public class ProductRepository : IProductRepository
         var imageId = await AddProductImageAsync(image);
 
         // Then update the product item
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -377,7 +378,7 @@ public class ProductRepository : IProductRepository
     #region UpdateData
     public async Task<bool> UpdateProductAsync(Product product)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -410,7 +411,7 @@ public class ProductRepository : IProductRepository
     }
     public async Task<bool> UpdateProductItemAsync(ProductItem productItem)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         using var transaction = await connection.BeginTransactionAsync();
@@ -491,7 +492,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<bool> DeleteProductItemAsync(int itemId)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         using var transaction = await connection.BeginTransactionAsync();
@@ -543,7 +544,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<bool> DeleteProductImageAsync(int imageId)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
         const string query = "DELETE FROM product_image WHERE id = @imageId";
         using var command = new NpgsqlCommand(query, connection);
@@ -554,8 +555,8 @@ public class ProductRepository : IProductRepository
     #endregion
 
 
-
     #region SearchData
+
     
 
     #endregion
