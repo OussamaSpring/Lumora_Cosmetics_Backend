@@ -1,0 +1,23 @@
+### Create Shop
+POST http://localhost:4013/api/shop/33333333-3333-3333-3333-333333333333
+Content-Type: application/json
+
+{
+  "name": "Test Shop",
+  "description": "A great shop for testing!",
+  "logoUrl": "https://example.com/logo.png",
+  "mapAddress": "123 Testing Ave"
+}
+
+###
+
+### Update Shop
+PUT http://localhost:5000/api/shop/11111111-1111-1111-1111-111111111111
+Content-Type: application/json
+
+{
+  "name": "Test Shop Updated",
+  "description": "Updated description",
+  "logoUrl": "https://example.com/logo-new.png",
+  "mapAddress": "456 New Test Blvd"
+}

@@ -20,14 +20,14 @@ namespace Presentation.Controllers
         [HttpPut("/supdate")]
         public async Task<IActionResult> CreateOrUpdateShop([FromBody] UpdateShopDto dto)
         {
-            var vendorIdClaim = User.Claims.FirstOrDefault(c => c.Type == "vendorId");
-            if (vendorIdClaim == null)
-                return Unauthorized(new { message = "VendorId not found in token" });
+            // var vendorIdClaim = User.Claims.FirstOrDefault(c => c.Type == "vendorId");
+            // if (vendorIdClaim == null)
+            //     return Unauthorized(new { message = "VendorId not found in token" });
 
-            if (!Guid.TryParse(vendorIdClaim.Value, out Guid vendorId))
-                return Unauthorized(new { message = "Invalid VendorId format" });
+            // if (!Guid.TryParse(vendorIdClaim.Value, out Guid vendorId))
+            //     return Unauthorized(new { message = "Invalid VendorId format" });
 
-            await _shopService.CreateOrUpdateShopAsync(dto, vendorId);
+            await _shopService.CreateOrUpdateShopAsync(dto,);
             return Ok(new { message = "Shop created or updated successfully" });
         }
 
