@@ -1,29 +1,88 @@
 ﻿using Npgsql;
 
 using System.Text.Json;
+using System.Text;
 
 
 using Application.Interfaces.Repositories;
 using Domain.Entities.ProductRelated;
 using Domain.Enums.Product;
+using Application.DTOs;
 
 
 namespace Infrastructure.Persistence.Repositories;
 
 public class ProductRepository : IProductRepository
 {
-    private readonly string _connectionString;
+    private readonly IDbContext _databaseContext;
 
-    public ProductRepository(string connectionString)
+    public ProductRepository(IDbContext databaseContext)
     {
-        _connectionString = connectionString;
+        _databaseContext = databaseContext;
     }
+
+
+    #region HelpFunction
+
+    private Product MapProduct(NpgsqlDataReader reader)
+    {
+        return new Product
+        {
+            Id = reader.GetInt32(0),
+            ShopId = reader.GetInt32(1),
+            SerialNumber = reader.IsDBNull(2) ? null : reader.GetString(2),
+            Name = reader.IsDBNull(3) ? null : reader.GetString(3),
+            Brand = reader.IsDBNull(4) ? null : reader.GetString(4),
+            About = reader.IsDBNull(5) ? null : reader.GetString(5),
+            Ingredients = reader.IsDBNull(6) ? null : reader.GetString(6),
+            HowToUse = reader.IsDBNull(7) ? null : reader.GetString(7),
+            Gender = (Gender)reader.GetInt16(8),
+            CreateDate = reader.GetDateTime(9),
+            UpdateDate = reader.GetDateTime(10),
+            CategoryId = reader.GetInt16(11),
+            Status = (ProductStatus)reader.GetInt16(12),
+            ImageUrl = reader.IsDBNull(13) ? null : reader.GetString(13)
+        };
+    }
+    private ProductItem MapProductItem(NpgsqlDataReader reader)
+    {
+        return new ProductItem
+        {
+            Id = reader.GetInt32(0),
+            ProductId = reader.GetInt32(1),
+            ProductCode = reader.IsDBNull(2) ? null : reader.GetString(2),
+            OriginalPrice = reader.GetDecimal(3),
+            SalePrice = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
+            CreateDate = reader.GetDateTime(5),
+            UpdateDate = reader.GetDateTime(6),
+            Variants = reader.IsDBNull(7) ? null : JsonSerializer.Deserialize<Dictionary<string, string>>(reader.GetString(7)),
+            ImageId = reader.IsDBNull(8) ? null : (int?)reader.GetInt32(8),
+            Stock = new Stock
+            {
+                Id = reader.GetInt32(9),
+                StockQuantity = reader.GetInt16(10),
+                SelledItemsNbr = reader.GetInt16(11),
+                ReservedItemsNbr = reader.GetInt16(12),
+                ItemLength = reader.IsDBNull(13) ? null : (float?)reader.GetDouble(13),
+                ItemWidth = reader.IsDBNull(14) ? null : (float?)reader.GetDouble(14),
+                ItemHeight = reader.IsDBNull(15) ? null : (float?)reader.GetDouble(15),
+                ItemWeight = reader.IsDBNull(16) ? null : (float?)reader.GetDouble(16),
+                DiscountRate = reader.IsDBNull(17) ? null : (float?)reader.GetDouble(17),
+                ExpirationDate = reader.IsDBNull(18) ? null : reader.GetDateTime(18),
+                LastRestockDate = reader.IsDBNull(19) ? null : reader.GetDateTime(19),
+                Status = (StockStatus)reader.GetInt16(20)
+            }
+        };
+    }
+
+    #endregion
+
 
     #region GetData
 
     public async Task<Product?> GetProductByIdAsync(int productId)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -43,23 +102,7 @@ public class ProductRepository : IProductRepository
 
         if (await reader.ReadAsync())
         {
-            return new Product
-            {
-                Id = reader.GetInt32(0),
-                ShopId = reader.GetInt32(1),
-                SerialNumber = reader.IsDBNull(2) ? null : reader.GetString(2),
-                Name = reader.IsDBNull(3) ? null : reader.GetString(3),
-                Brand = reader.IsDBNull(4) ? null : reader.GetString(4),
-                About = reader.IsDBNull(5) ? null : reader.GetString(5),
-                Ingredients = reader.IsDBNull(6) ? null : reader.GetString(6),
-                HowToUse = reader.IsDBNull(7) ? null : reader.GetString(7),
-                Gender = (Gender)reader.GetInt16(8),
-                CreateDate = reader.GetDateTime(9),
-                UpdateDate = reader.GetDateTime(10),
-                CategoryId = reader.GetInt16(11),
-                Status = (ProductStatus)reader.GetInt16(12),
-                ImageUrl = reader.IsDBNull(13) ? null : reader.GetString(13)
-            };
+            return MapProduct(reader);
         }
 
         return null;
@@ -69,7 +112,7 @@ public class ProductRepository : IProductRepository
     {
         var products = new List<Product>();
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -89,23 +132,7 @@ public class ProductRepository : IProductRepository
 
         while (await reader.ReadAsync())
         {
-            products.Add(new Product
-            {
-                Id = reader.GetInt32(0),
-                ShopId = reader.GetInt32(1),
-                SerialNumber = reader.IsDBNull(2) ? null : reader.GetString(2),
-                Name = reader.IsDBNull(3) ? null : reader.GetString(3),
-                Brand = reader.IsDBNull(4) ? null : reader.GetString(4),
-                About = reader.IsDBNull(5) ? null : reader.GetString(5),
-                Ingredients = reader.IsDBNull(6) ? null : reader.GetString(6),
-                HowToUse = reader.IsDBNull(7) ? null : reader.GetString(7),
-                Gender = (Gender)reader.GetInt16(8),
-                CreateDate = reader.GetDateTime(9),
-                UpdateDate = reader.GetDateTime(10),
-                CategoryId = reader.GetInt16(11),
-                Status = (ProductStatus)reader.GetInt16(12),
-                ImageUrl = reader.IsDBNull(13) ? null : reader.GetString(13)
-            });
+            products.Add(MapProduct(reader));
         }
 
         return products;
@@ -113,7 +140,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<ProductItem?> GetProductItemByIdAsync(int productItemId)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -134,33 +161,7 @@ public class ProductRepository : IProductRepository
 
         if (await reader.ReadAsync())
         {
-            return new ProductItem
-            {
-                Id = reader.GetInt32(0),
-                ProductId = reader.GetInt32(1),
-                ProductCode = reader.IsDBNull(2) ? null : reader.GetString(2),
-                OriginalPrice = reader.GetDecimal(3),
-                SalePrice = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                CreateDate = reader.GetDateTime(5),
-                UpdateDate = reader.GetDateTime(6),
-                Variants = reader.IsDBNull(7) ? null : JsonSerializer.Deserialize<Dictionary<string, string>>(reader.GetString(7)),
-                ImageId = reader.IsDBNull(8) ? null : (int?)reader.GetInt32(8),
-                Stock = new Stock
-                {
-                    Id = reader.GetInt32(9),
-                    StockQuantity = reader.GetInt16(10),
-                    SelledItemsNbr = reader.GetInt16(11),
-                    ReservedItemsNbr = reader.GetInt16(12),
-                    ItemLength = reader.IsDBNull(13) ? null : (float?)reader.GetDouble(13),
-                    ItemWidth = reader.IsDBNull(14) ? null : (float?)reader.GetDouble(14),
-                    ItemHeight = reader.IsDBNull(15) ? null : (float?)reader.GetDouble(15),
-                    ItemWeight = reader.IsDBNull(16) ? null : (float?)reader.GetDouble(16),
-                    DiscountRate = reader.IsDBNull(17) ? null : (float?)reader.GetDouble(17),
-                    ExpirationDate = reader.IsDBNull(18) ? null : reader.GetDateTime(18),
-                    LastRestockDate = reader.IsDBNull(19) ? null : reader.GetDateTime(19),
-                    Status = (StockStatus)reader.GetInt16(20)
-                }
-            };
+            return MapProductItem(reader);
         }
 
         return null;
@@ -169,7 +170,7 @@ public class ProductRepository : IProductRepository
     {
         var items = new List<ProductItem>();
 
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -190,40 +191,14 @@ public class ProductRepository : IProductRepository
 
         while (await reader.ReadAsync())
         {
-            items.Add(new ProductItem
-            {
-                Id = reader.GetInt32(0),
-                ProductId = reader.GetInt32(1),
-                ProductCode = reader.IsDBNull(2) ? null : reader.GetString(2),
-                OriginalPrice = reader.GetDecimal(3),
-                SalePrice = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                CreateDate = reader.GetDateTime(5),
-                UpdateDate = reader.GetDateTime(6),
-                Variants = reader.IsDBNull(7) ? null : JsonSerializer.Deserialize<Dictionary<string, string>>(reader.GetString(7)),
-                ImageId = reader.IsDBNull(8) ? null : (int?)reader.GetInt32(8),
-                Stock = new Stock
-                {
-                    Id = reader.GetInt32(9),
-                    StockQuantity = reader.GetInt16(10),
-                    SelledItemsNbr = reader.GetInt16(11),
-                    ReservedItemsNbr = reader.GetInt16(12),
-                    ItemLength = reader.IsDBNull(13) ? null : (float?)reader.GetDouble(13),
-                    ItemWidth = reader.IsDBNull(14) ? null : (float?)reader.GetDouble(14),
-                    ItemHeight = reader.IsDBNull(15) ? null : (float?)reader.GetDouble(15),
-                    ItemWeight = reader.IsDBNull(16) ? null : (float?)reader.GetDouble(16),
-                    DiscountRate = reader.IsDBNull(17) ? null : (float?)reader.GetDouble(17),
-                    ExpirationDate = reader.IsDBNull(18) ? null : reader.GetDateTime(18),
-                    LastRestockDate = reader.IsDBNull(19) ? null : reader.GetDateTime(19),
-                    Status = (StockStatus)reader.GetInt16(20)
-                }
-            });
+            items.Add(MapProductItem(reader));
         }
 
         return items;
     }
     public async Task<ProductImage?> GetProductImageByIdAsync(int imageId)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
         const string query = @"
                 SELECT 
@@ -253,7 +228,7 @@ public class ProductRepository : IProductRepository
     #region AddData
     public async Task<int> CreateProductAsync(Product product)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -283,7 +258,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<int> AddProductImageAsync(ProductImage image)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -307,7 +282,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<int> AddProductItemAsync(ProductItem productItem)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         using var transaction = await connection.BeginTransactionAsync();
@@ -380,7 +355,7 @@ public class ProductRepository : IProductRepository
         var imageId = await AddProductImageAsync(image);
 
         // Then update the product item
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -403,7 +378,7 @@ public class ProductRepository : IProductRepository
     #region UpdateData
     public async Task<bool> UpdateProductAsync(Product product)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         const string query = @"
@@ -436,7 +411,7 @@ public class ProductRepository : IProductRepository
     }
     public async Task<bool> UpdateProductItemAsync(ProductItem productItem)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         using var transaction = await connection.BeginTransactionAsync();
@@ -517,7 +492,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<bool> DeleteProductItemAsync(int itemId)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
 
         using var transaction = await connection.BeginTransactionAsync();
@@ -569,7 +544,7 @@ public class ProductRepository : IProductRepository
 
     public async Task<bool> DeleteProductImageAsync(int imageId)
     {
-        using var connection = new NpgsqlConnection(_connectionString);
+        using var connection = _databaseContext.CreateConnection();
         await connection.OpenAsync();
         const string query = "DELETE FROM product_image WHERE id = @imageId";
         using var command = new NpgsqlCommand(query, connection);
@@ -580,9 +555,9 @@ public class ProductRepository : IProductRepository
     #endregion
 
 
-
     #region SearchData
 
+    
 
     #endregion
 

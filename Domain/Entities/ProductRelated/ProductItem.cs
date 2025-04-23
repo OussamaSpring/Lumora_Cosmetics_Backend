@@ -11,8 +11,7 @@ public class ProductItem
     public DateTime UpdateDate { get; set; }
 
     /* for JSON (I used strings for easy implementation)
-     * NOTE: Key string is name of the variant type     
-     */
+     * NOTE: Key string is name of the variant type     */
     public Dictionary<string, string>? Variants { get; set; } 
     public int? ImageId { get; set; }
     public Stock? Stock { get; set; }
