@@ -15,17 +15,21 @@ public class LoginController : ControllerBase
         _userAuthentication = userAuthentication;
     }
 
-    //[HttpPost("login/")]
     [HttpPost]
-    public ActionResult<Result<string>> Login(LoginRequest loginRequest)
+    public async Task<ActionResult> Login(LoginRequest loginRequest)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(Result<string>.Failure(new Error("Body Request", "input is not valid")));
         }
 
-        var result = _userAuthentication.Login(loginRequest);
-        return result.IsSuccess ? Ok(result) : BadRequest(result);
-
+        var result = await _userAuthentication.Login(loginRequest);
+        return result.IsSuccess ? Ok(new
+        {
+            AccessToken = result.Value
+        }) : BadRequest(new
+        {
+            ErrorMessage = result.Error.description
+        });
     }
 }
