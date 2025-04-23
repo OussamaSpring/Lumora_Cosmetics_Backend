@@ -1,11 +1,12 @@
 ﻿using Application.DTOs;
+using Application.DTOs.Category;
 using Application.Interfaces.Services;
 using Domain.Enums.Account;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers.Vendor;
 
-[Route("api/vendor/register")]
+[Route("api/vendor/[controller]")]
 [ApiController]
 public class RegisterController : ControllerBase
 {

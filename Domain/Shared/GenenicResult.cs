@@ -1,4 +1,5 @@
-﻿namespace Domain.Shared;
+﻿
+namespace Domain.Shared;
 
 public class Result<T> : Result
 {
@@ -10,5 +11,4 @@ public class Result<T> : Result
     }
     public static Result<T> Success(T value) => new Result<T>(value, true, Error.None);
     public static Result<T?> Failure(Error error) => new(default(T), false, error);
-
 }

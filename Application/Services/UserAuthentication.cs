@@ -1,5 +1,5 @@
-﻿using System.Security.Cryptography.X509Certificates;
-using Application.DTOs;
+﻿using Application.DTOs;
+using Application.DTOs.Category;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities.AccountRelated;
@@ -49,34 +49,32 @@ public class UserAuthentication : IUserAuthentication
         }
     }
 
-    public async Task<Result<string?>> Register(RegisterRequest registerRequest, UserRole userRole)
+    public async Task<Result<string?>> Register(RegisterRequest register, UserRole userRole)
     {
         try
         {
-
-            bool userExist = await _authRepository.UsernameExistsAsync(registerRequest.Username);
-            if (userExist)
+            if (await _authRepository.UsernameExistsAsync(register.Username))
             {
                 return Result<string>.Failure(new Error("Register", "username already using"));
             }
 
-            //bool emailExist = await _authRepository.EmailExistsAsync(registerRequest.Email);
-            //if (emailExist)
-            //{
-            //    return Result<string>.Failure(new Error("Register", "email already using"));
-            //}
+            // exception in unique constraint ???
+            if (await _authRepository.EmailExistsAsync(register.Email))
+            {
+                return Result<string>.Failure(new Error("Register", "email already using"));
+            }
 
             var user = new User
             {
-                Username = registerRequest.Username,
-                Email = registerRequest.Email,
-                Password = HasherSHA256.Hash(registerRequest.Password),
-                FirstName = registerRequest.FirstName,
-                MiddleName = registerRequest.MiddleName,
-                LastName = registerRequest.LastName,
-                DateOfBirth = registerRequest.DateOfBirth,
-                PhoneNumber = registerRequest.PhoneNumber,
-                Gender = registerRequest.Gender,
+                Username = register.Username,
+                Email = register.Email,
+                Password = HasherSHA256.Hash(register.Password),
+                FirstName = register.FirstName,
+                MiddleName = register.MiddleName,
+                LastName = register.LastName,
+                DateOfBirth = register.DateOfBirth,
+                PhoneNumber = register.PhoneNumber,
+                Gender = register.Gender,
                 ProfileImageUrl = string.Empty, // profile image (nullable)
                 Role = userRole,
                 AccountStatus = AccountStatus.Active,

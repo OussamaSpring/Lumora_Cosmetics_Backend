@@ -1,14 +1,12 @@
 ﻿using Domain.Enums.Account;
 
-namespace Application.DTOs;
+namespace Application.DTOs.Profile;
 
-public record UpdateUserRequest(
+public record UpdatePersonalInformationRequest(
     string Username,
-    string Email,
-    string Password,
     string FirstName,
     string? MiddleName,
     string LastName,
     DateTime? DateOfBirth,
     long? PhoneNumber,
-    Gender? Gender);
+    string? Gender);

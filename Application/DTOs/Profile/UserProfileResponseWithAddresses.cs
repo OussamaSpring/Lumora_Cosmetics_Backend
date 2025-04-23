@@ -1,13 +1,11 @@
-﻿using Domain.Entities.AccountRelated;
-using Domain.Enums.Account;
+﻿using Domain.Enums.Account;
 
-namespace Application.DTOs;
+namespace Application.DTOs.Profile;
 
-public class UserProfileResponse
+public class UserProfileResponseWithAddresses
 {
     public string Username { get; set; }
     public string Email { get; set; }
-    public string Password { get; set; }
     public string? ProfileImageUrl { get; set; }
     public string FirstName { get; set; }
     public string? MiddleName { get; set; }
@@ -16,5 +14,5 @@ public class UserProfileResponse
     public long? PhoneNumber { get; set; }
     public Gender? Gender { get; set; }
 
-    public IEnumerable<Address> Addresses { get; set; }
+    //public IEnumerable<Address> Addresses { get; set; } = new List<Address>();
 }

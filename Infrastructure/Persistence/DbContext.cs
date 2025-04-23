@@ -17,8 +17,10 @@ public class DbContext : IDbContext
     {
         //return new NpgsqlConnection(_configuration.DefaultConnection);
 
-        return new("User Id=postgres.mglzwmdcowngkudaxqmr;Password=Cosmiticsdotnet123+;Server=aws-0-eu-west-2.pooler.supabase.com;Port=6543;Database=postgres");
+        //return new("User Id=postgres.mglzwmdcowngkudaxqmr;Password=Cosmiticsdotnet123+;Server=aws-0-eu-west-2.pooler.supabase.com;Port=6543;Database=postgres");
         //return new NpgsqlConnection(_configuration.GetConnectionString(DataBase));
+        return new("User Id=postgres;Password=admin;Server=localhost;Port=5432;Database=lumora;");
+        //return new(_configuration.DefaultConnection);
 
     }
 }
