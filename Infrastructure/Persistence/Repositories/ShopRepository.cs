@@ -46,14 +46,14 @@ namespace Infrastructure.Persistence.Repositories
             return null;
         }
 
-        public async Task CreateShopAsync(Shop shop)
+        public async Task<int> CreateShopAsync(Shop shop)
         {
             using var connection = _databaseContext.CreateConnection();
             await connection.OpenAsync();
 
             var query = @"
                 INSERT INTO Shops (VendorId, Name, Description, LogoUrl, MapAddress, CreateDate, UpdateDate)
-                VALUES (@VendorId, @Name, @Description, @LogoUrl, @MapAddress, @CreateDate, @UpdateDate)";
+                VALUES (@VendorId, @Name, @Description, @LogoUrl, @MapAddress, @CreateDate, @UpdateDate) RETURNING id;";
 
             using var command = new NpgsqlCommand(query, connection);
             command.Parameters.AddWithValue("@VendorId", shop.VendorId);
@@ -64,7 +64,7 @@ namespace Infrastructure.Persistence.Repositories
             command.Parameters.AddWithValue("@CreateDate", shop.CreateDate);
             command.Parameters.AddWithValue("@UpdateDate", shop.UpdateDate);
 
-            await command.ExecuteNonQueryAsync();
+            return (int)await command.ExecuteScalarAsync();
         }
 
         public async Task UpdateShopAsync(Shop shop)

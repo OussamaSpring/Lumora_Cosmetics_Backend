@@ -1,8 +1,6 @@
 using Application.DTOs;
 using Application.Interfaces.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Presentation.Controllers
 {
@@ -17,23 +15,18 @@ namespace Presentation.Controllers
             _shopService = shopService;
         }
 
-        [HttpPut("/supdate")]
-        public async Task<IActionResult> CreateOrUpdateShop([FromBody] UpdateShopDto dto)
+        [HttpPost("{vendorId}")]
+        public async Task<IActionResult> CreateShop(Guid vendorId, [FromBody] UpdateShopDto dto)
         {
-            // var vendorIdClaim = User.Claims.FirstOrDefault(c => c.Type == "vendorId");
-            // if (vendorIdClaim == null)
-            //     return Unauthorized(new { message = "VendorId not found in token" });
-
-            // if (!Guid.TryParse(vendorIdClaim.Value, out Guid vendorId))
-            //     return Unauthorized(new { message = "Invalid VendorId format" });
-
-            await _shopService.CreateOrUpdateShopAsync(dto,);
-            return Ok(new { message = "Shop created or updated successfully" });
+            Shop shop = await _shopService.CreateShopAsync(dto, vendorId);
+            return Ok(new { Shop = shop, message = "Shop created successfully" });
         }
 
-        private IActionResult Unauthorized(object value)
+        [HttpPut("{vendorId}")]
+        public async Task<IActionResult> UpdateShop(Guid vendorId, [FromBody] UpdateShopDto dto)
         {
-            throw new NotImplementedException();
+            await _shopService.UpdateShopAsync(dto, vendorId);
+            return Ok(new { message = "Shop updated successfully" });
         }
     }
 }

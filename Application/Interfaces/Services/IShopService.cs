@@ -4,6 +4,7 @@ namespace Application.Interfaces.Services
 {
     public interface IShopService
     {
-        Task CreateOrUpdateShopAsync(UpdateShopDto dto, Guid vendorId);
+        Task CreateShopAsync(UpdateShopDto dto, Guid vendorId);
+        Task UpdateShopAsync(UpdateShopDto dto, Guid vendorId);
     }
 }
