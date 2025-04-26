@@ -6,6 +6,7 @@ using Infrastructure.Persistence.Repositories;
 using Infrastructure.Persistence;
 using Infrastructure.Services;
 using Persistence.Repositories;
+using Domain.Entities.ProductRelated;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,25 +43,13 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 
-builder.Services.AddScoped<IVarianteTypeRepository, VariantTypeRepository>();
+builder.Services.AddScoped<IVariantTypeRepository, VariantTypeRepository>();
 builder.Services.AddScoped<IVariantTypeService, VariantTypeService>();
 
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-//    {
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuer = true,
-//            ValidateAudience = true,
-//            ValidateLifetime = true,
-//            ValidateIssuerSigningKey = true,
-//            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-//            ValidAudience = builder.Configuration["Jwt:Audience"],
-//            IssuerSigningKey = new SymmetricSecurityKey(
-//                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-//        };
-//    });
-// Controllers - Removed duplicate registration
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
+
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

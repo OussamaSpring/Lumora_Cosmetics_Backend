@@ -2,7 +2,7 @@
 
 namespace Application.Interfaces.Repositories;
 
-public interface IVarianteTypeRepository
+public interface IVariantTypeRepository
 {
     Task<int> AddVariantTypeAsync(VariantType variant);
     Task DeleteVariantTypeAsync(int id);
