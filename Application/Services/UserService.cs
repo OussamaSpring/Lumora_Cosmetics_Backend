@@ -107,7 +107,7 @@ public class UserService : IUserService
         });
     }
 
-    public async Task<Result<string?>> UpdateUserPhoto(Guid id) // photo
+    public async Task<Result<string?>> UpdateUserPhoto(Guid id, IFormFile file) // photo
     {
         var user = await _userRepository.GetProfileAsync(id);
         if (user is null)
@@ -115,7 +115,7 @@ public class UserService : IUserService
             return Result<string?>.Failure(new Error("Upload photo", "user does not exist"));
         }
 
-        var url = _imageService.Upload(string.Empty);
+        var url = await _imageService.Upload(file);
         if (url.Value == null)
         {
             return Result<string>.Failure(new Error("Upload photo", "upload photo"));
