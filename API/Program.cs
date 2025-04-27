@@ -6,6 +6,10 @@ using Infrastructure.Persistence.Repositories;
 using Infrastructure.Persistence;
 using Infrastructure.Services;
 using Persistence.Repositories;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,9 +61,47 @@ builder.Services.AddScoped<IVariantTypeService, VariantTypeService>();
 //            ValidIssuer = builder.Configuration["Jwt:Issuer"],
 //            ValidAudience = builder.Configuration["Jwt:Audience"],
 //            IssuerSigningKey = new SymmetricSecurityKey(
-//                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+//                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
 //        };
 //    });
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{    
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+        ClockSkew = TimeSpan.Zero // Remove default 5-minute tolerance
+    };
+
+    //// Optional: For SignalR/WebSockets
+    //options.Events = new JwtBearerEvents
+    //{
+    //    OnMessageReceived = context =>
+    //    {
+    //        var accessToken = context.Request.Query["access_token"];
+    //        if (!string.IsNullOrEmpty(accessToken) &&
+    //            context.HttpContext.Request.Path.StartsWithSegments("/hub"))
+    //        {
+    //            context.Token = accessToken;
+    //        }
+    //        return Task.CompletedTask;
+    //    }
+    //};
+});
+
 // Controllers - Removed duplicate registration
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

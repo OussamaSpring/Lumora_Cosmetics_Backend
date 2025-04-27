@@ -36,7 +36,6 @@ public class UserRepository : IUserRepository
         using var reader = await command.ExecuteReaderAsync();
         if (await reader.ReadAsync())
         {
-            //Console.WriteLine("dadadadadDAD" + Convert(reader.GetString(8)));
             return new User
             {
                 Id = reader.GetGuid(0),
@@ -75,8 +74,8 @@ public class UserRepository : IUserRepository
             user.MiddleName is null ? DBNull.Value : user.MiddleName);
         command.Parameters.AddWithValue("@DateOfBirth",
             user.DateOfBirth is null ? DBNull.Value : user.DateOfBirth);
-        command.Parameters.AddWithValue("@Gender",
-            user.Gender is not null ? user.Gender.Value.ToString() : DBNull.Value);
+        command.Parameters.AddWithValue("@Gender", DBNull.Value);
+            //user.Gender is not null ? user.Gender.Value.ToString() : DBNull.Value);
         command.Parameters.AddWithValue("@PhoneNumber",
             user.PhoneNumber is null ? DBNull.Value : user.PhoneNumber);
         command.Parameters.AddWithValue("@UpdateDate", user.UpdateDate);
