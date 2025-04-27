@@ -41,7 +41,9 @@ public class ProductRepository : IProductRepository
             UpdateDate = reader.GetDateTime(10),
             CategoryId = reader.GetInt16(11),
             Status = (ProductStatus)reader.GetInt16(12),
-            ImageUrl = reader.IsDBNull(13) ? null : reader.GetString(13)
+            ImageUrl = reader.IsDBNull(13) ? null : reader.GetString(13),
+            MinPrice = reader.IsDBNull(14) ? null : reader.GetDecimal(14)
+
         };
     }
     private ProductItem MapProductItem(NpgsqlDataReader reader)
@@ -557,7 +559,126 @@ public class ProductRepository : IProductRepository
 
     #region SearchData
 
-    
+    /* I applied here the Faceted Search, see the below references:
+         * https://stackoverflow.com/questions/5321595/what-is-faceted-search
+         * Also use ChatGPT for explanation
+         */
+
+
+    public async Task<IEnumerable<Product>> SearchProductsAsync(ProductSearchCriteria criteria)
+    {
+        using var connection = _databaseContext.CreateConnection();
+        await connection.OpenAsync();
+
+        string productsQuery = BuildQueries(criteria);
+
+        var command = CreateCommand(connection, productsQuery, criteria);
+
+        var products = new List<Product>();
+
+        using var reader = await command.ExecuteReaderAsync();
+
+
+        while (await reader.ReadAsync())
+        {
+            products.Add(MapProduct(reader));
+        }
+
+        return products;
+
+    }
+
+    private string BuildQueries(ProductSearchCriteria criteria)
+    {
+        // Product entity with added column for the lowest price in the product items collection
+
+        var productsQuery = new StringBuilder(@"
+            SELECT DISTINCT (p.id), p.shop_id, p.serial_number, p.name, p.brand, p.about, 
+                   p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
+                   p.category_id, p.status_id,
+                   pi.url as image_url,
+                   (SELECT MIN(pit.original_price) 
+                    FROM product_item pit 
+                    WHERE pit.product_id = p.id) as min_price
+            FROM product p
+            LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
+            LEFT JOIN product_item pit on pit.product_id = p.id
+            WHERE p.status_id = (SELECT id FROM product_status WHERE name = 'Published')");
+
+
+        // Add filters
+
+
+        if (criteria.CategoryIds?.Count > 0)
+        {
+            var categories = " AND p.category_id = ANY(@categoryIds)";
+            productsQuery.Append(categories);
+        }
+
+        if (criteria.Genders.HasValue)
+        {
+            var gender = " AND p.gender = @gender";
+            productsQuery.Append(gender);
+        }
+
+        if (criteria.MinPrice.HasValue)
+        {
+            var minPrice = " AND pit.original_price >= @minPrice";
+            productsQuery.Append(minPrice);
+        }
+
+        if (criteria.MaxPrice.HasValue)
+        {
+            var maxPrice = " AND pit.original_price <= @maxPrice";
+            productsQuery.Append(maxPrice);
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.SearchTerm))
+        {
+            var searchTerm = @" AND (p.name ILIKE @searchTerm OR p.about ILIKE @searchTerm OR 
+                                         p.brand ILIKE @searchTerm OR p.ingredients ILIKE @searchTerm OR
+                                         p.how_to_use ILIKE @searchTerm)";
+            productsQuery.Append(searchTerm);
+        }
+
+
+        return productsQuery.ToString() + ";";
+    }
+
+
+
+    private NpgsqlCommand CreateCommand(NpgsqlConnection connection, string query, ProductSearchCriteria criteria)
+    {
+        var command = new NpgsqlCommand(query, connection);
+
+        if (!string.IsNullOrWhiteSpace(criteria.SearchTerm))
+        {
+            command.Parameters.AddWithValue("@searchTerm", $"%{criteria.SearchTerm}%");
+        }
+
+        if (criteria.CategoryIds?.Count > 0)
+        {
+            command.Parameters.AddWithValue("@categoryIds", criteria.CategoryIds.ToArray());
+        }
+
+        if (criteria.Genders.HasValue)
+        {
+            command.Parameters.AddWithValue("@gender", criteria.Genders.ToString());
+        }
+
+        if (criteria.MinPrice.HasValue)
+        {
+            command.Parameters.AddWithValue("@minPrice", criteria.MinPrice.Value);
+        }
+
+        if (criteria.MaxPrice.HasValue)
+        {
+            command.Parameters.AddWithValue("@maxPrice", criteria.MaxPrice.Value);
+        }
+
+
+        return command;
+    }
 
     #endregion
 
