@@ -36,7 +36,7 @@ public class ProductRepository : IProductRepository
             About = reader.IsDBNull(5) ? null : reader.GetString(5),
             Ingredients = reader.IsDBNull(6) ? null : reader.GetString(6),
             HowToUse = reader.IsDBNull(7) ? null : reader.GetString(7),
-            Gender = (Gender)reader.GetInt16(8),
+            Gender = Enum.Parse<Gender>(reader.GetString(8)),
             CreateDate = reader.GetDateTime(9),
             UpdateDate = reader.GetDateTime(10),
             CategoryId = reader.GetInt16(11),
@@ -615,7 +615,7 @@ public class ProductRepository : IProductRepository
             productsQuery.Append(categories);
         }
 
-        if (criteria.Genders.HasValue)
+        if (criteria.Genders is not null)
         {
             var gender = " AND p.gender = @gender";
             productsQuery.Append(gender);
@@ -661,7 +661,7 @@ public class ProductRepository : IProductRepository
             command.Parameters.AddWithValue("@categoryIds", criteria.CategoryIds.ToArray());
         }
 
-        if (criteria.Genders.HasValue)
+        if (criteria.Genders is not null)
         {
             command.Parameters.AddWithValue("@gender", criteria.Genders.ToString());
         }

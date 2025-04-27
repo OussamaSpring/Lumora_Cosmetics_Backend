@@ -60,11 +60,11 @@ public class ProfileController : ControllerBase
         return result.IsSuccess ? Ok() : BadRequest(result.Error);
     }
 
-    [HttpPut("update-photo/{id:guid}")]
-    public async Task UpdatePhoto([FromRoute] Guid id, IFormFile file)
-    {
-        _userService.
-    }
+    //[HttpPut("update-photo/{id:guid}")]
+    //public async Task UpdatePhoto([FromRoute] Guid id, IFormFile file)
+    //{
+    //    _userService.
+    //}
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteUser([FromRoute] Guid id)
