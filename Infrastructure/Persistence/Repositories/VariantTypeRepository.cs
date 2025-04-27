@@ -4,7 +4,7 @@ using Npgsql;
 
 namespace Infrastructure.Persistence.Repositories;
 
-public class VariantTypeRepository : IVarianteTypeRepository
+public class VariantTypeRepository : IVariantTypeRepository
 {
     private readonly IDbContext _dbContext;
     public VariantTypeRepository(IDbContext dbContext)

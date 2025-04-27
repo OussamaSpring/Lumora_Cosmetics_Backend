@@ -6,6 +6,7 @@ using Infrastructure.Persistence.Repositories;
 using Infrastructure.Persistence;
 using Infrastructure.Services;
 using Persistence.Repositories;
+using Domain.Entities.ProductRelated;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -46,9 +47,11 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 
-builder.Services.AddScoped<IVarianteTypeRepository, VariantTypeRepository>();
+builder.Services.AddScoped<IVariantTypeRepository, VariantTypeRepository>();
 builder.Services.AddScoped<IVariantTypeService, VariantTypeService>();
 
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
 //builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 //    .AddJwtBearer(options =>
 //    {
