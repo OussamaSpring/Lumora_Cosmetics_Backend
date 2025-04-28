@@ -15,7 +15,7 @@ public static class ServiceExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IAddressRepository, AddressRepository>();
-        services.AddScoped<IVarianteTypeRepository, VariantTypeRepository>();
+        services.AddScoped<IVariantTypeRepository, VariantTypeRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
 
         return services;

@@ -88,13 +88,16 @@ public class ProductRepository : IProductRepository
         await connection.OpenAsync();
 
         const string query = @"
-                SELECT 
-                    p.id, p.shop_id, p.serial_number, p.name, p.brand, p.about, 
-                    p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
-                    p.category_id, p.status,
-                    pi.url as image_url
-                FROM product p
-                LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
+                SELECT DISTINCT (p.id), p.shop_id, p.serial_number, p.name, p.brand, p.about, 
+                   p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
+                   p.category_id, p.status,
+                   pi.url as image_url,
+                   (SELECT MIN(pit.original_price) 
+                    FROM product_item pit 
+                    WHERE pit.product_id = p.id) as min_price
+            FROM product p
+            LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
+            LEFT JOIN product_item pit on pit.product_id = p.id
                 WHERE p.id = @productId";
 
         using var command = new NpgsqlCommand(query, connection);
@@ -118,13 +121,16 @@ public class ProductRepository : IProductRepository
         await connection.OpenAsync();
 
         const string query = @"
-                SELECT 
-                    p.id, p.shop_id, p.serial_number, p.name, p.brand, p.about, 
-                    p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
-                    p.category_id, p.status,
-                    pi.url as image_url
-                FROM product p
-                LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
+                SELECT DISTINCT (p.id), p.shop_id, p.serial_number, p.name, p.brand, p.about, 
+                   p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
+                   p.category_id, p.status,
+                   pi.url as image_url,
+                   (SELECT MIN(pit.original_price) 
+                    FROM product_item pit 
+                    WHERE pit.product_id = p.id) as min_price
+            FROM product p
+            LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
+            LEFT JOIN product_item pit on pit.product_id = p.id
                 WHERE p.shop_id = @shopId";
 
         using var command = new NpgsqlCommand(query, connection);
@@ -665,7 +671,7 @@ public class ProductRepository : IProductRepository
         var productsQuery = new StringBuilder(@"
             SELECT DISTINCT (p.id), p.shop_id, p.serial_number, p.name, p.brand, p.about, 
                    p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
-                   p.category_id, p.status_id,
+                   p.category_id, p.status,
                    pi.url as image_url,
                    (SELECT MIN(pit.original_price) 
                     FROM product_item pit 
@@ -673,7 +679,7 @@ public class ProductRepository : IProductRepository
             FROM product p
             LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
             LEFT JOIN product_item pit on pit.product_id = p.id
-            WHERE p.status_id = (SELECT id FROM product_status WHERE name = 'Published')");
+            WHERE p.status = (SELECT id FROM product_status WHERE name = 'Published')");
 
 
         // Add filters
