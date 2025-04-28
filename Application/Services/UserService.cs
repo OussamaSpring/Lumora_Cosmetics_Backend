@@ -3,13 +3,14 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Enums.Account;
 using Domain.Shared;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Services;
 
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
-    //private readonly IImageService _imageService;
+    private readonly IImageService _imageService;
     private readonly IAddressRepository _addressRepository;
     public UserService(
         IUserRepository userProfileRepository,
@@ -17,7 +18,7 @@ public class UserService : IUserService
         IAddressRepository addressRepository)
     {
         _userRepository = userProfileRepository;
-        //_imageService = imageService;
+        _imageService = imageService;
         _addressRepository = addressRepository;
     }
 
@@ -107,26 +108,26 @@ public class UserService : IUserService
         });
     }
 
-    //public async Task<Result<string?>> UpdateUserPhoto(Guid id, IFormFile file) // photo
-    //{
-    //    var user = await _userRepository.GetProfileAsync(id);
-    //    if (user is null)
-    //    {
-    //        return Result<string?>.Failure(new Error("Upload photo", "user does not exist"));
-    //    }
+    public async Task<Result<string?>> UpdateUserPhoto(Guid id, IFormFile file)
+    {
+        var user = await _userRepository.GetProfileAsync(id);
+        if (user is null)
+        {
+            return Result<string?>.Failure(new Error("Upload photo", "user does not exist"));
+        }
 
-    //    var url = await _imageService.Upload(file);
-    //    if (url.Value == null)
-    //    {
-    //        return Result<string>.Failure(new Error("Upload photo", "upload photo"));
-    //    }
+        var uploadImageResult = await _imageService.Upload(file);
+        if (uploadImageResult.IsFailure)
+        {
+            return uploadImageResult;
+        }
 
-    //    user.ProfileImageUrl = url.Value;
-    //    await _userRepository.UpdateProfileImageAsync(id, url.Value);
+        user.ProfileImageUrl = uploadImageResult.Value;
+        await _userRepository.UpdateProfileImageAsync(id, uploadImageResult.Value);
 
-    //    return Result<string?>.Success(url.Value);
-    //}
-    
+        return Result<string?>.Success(uploadImageResult.Value);
+    }
+
     public async Task<Result> UpdateCredentialsAsync(
         Guid id,
         UpdateCredentialsRequest request)

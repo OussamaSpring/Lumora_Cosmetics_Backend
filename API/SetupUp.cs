@@ -2,6 +2,7 @@
 using Application.Interfaces.Services;
 using Application.Services;
 using Infrastructure.Persistence.Repositories;
+using Infrastructure.Services;
 using Persistence.Repositories;
 
 namespace API;
@@ -22,6 +23,8 @@ public static class ServiceExtensions
 
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
+        services.AddScoped<IImageService, ImageService>();
+
         services.AddScoped<IUserAuthentication, UserAuthentication>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICategoryService, CategoryService>();

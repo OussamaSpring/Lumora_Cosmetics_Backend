@@ -1,8 +1,9 @@
 ﻿using Domain.Shared;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Interfaces.Services;
 
 public interface IImageService
 {
-    Result<string?> Upload(string imageId);
+    Task<Result<string?>> Upload(IFormFile file);
 }

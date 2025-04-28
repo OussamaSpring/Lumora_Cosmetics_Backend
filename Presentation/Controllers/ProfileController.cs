@@ -2,6 +2,7 @@
 using Application.DTOs.Profile;
 using Application.Interfaces.Services;
 using Domain.Shared;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers;
@@ -60,11 +61,12 @@ public class ProfileController : ControllerBase
         return result.IsSuccess ? Ok() : BadRequest(result.Error);
     }
 
-    //[HttpPut("update-photo/{id:guid}")]
-    //public async Task UpdatePhoto([FromRoute] Guid id, IFormFile file)
-    //{
-    //    _userService.
-    //}
+    [HttpPut("update-photo/{id:guid}")]
+    public async Task<IActionResult> UpdatePhoto([FromRoute] Guid id, IFormFile file)
+    {
+        var result = await _userService.UpdateUserPhoto(id, file);
+        return result.IsSuccess ? Ok(result.Value): BadRequest(result.Error);
+    }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteUser([FromRoute] Guid id)

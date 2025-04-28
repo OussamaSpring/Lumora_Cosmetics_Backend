@@ -83,9 +83,18 @@ public class UserRepository : IUserRepository
         command.ExecuteNonQuery();
     }
 
-    public Task UpdateProfileImageAsync(Guid userId, string imageUrl)
+    public async Task UpdateProfileImageAsync(Guid userId, string imageUrl)
     {
-        throw new NotImplementedException();
+        using var connection = _databaseContext.CreateConnection();
+        const string sql = @"UPDATE ""user""
+                            SET profile_image = @ProfileImage
+                            WHERE id = @Id";
+
+        await connection.OpenAsync();
+        using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@ProfileImage", imageUrl);
+        command.Parameters.AddWithValue("@Id", userId);
+        command.ExecuteNonQuery();
     }
 
     public async Task UpdateCredentialsAsync(Guid userId, User user)

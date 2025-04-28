@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Profile;
 using Domain.Shared;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Interfaces.Services;
 
@@ -11,6 +12,6 @@ public interface IUserService
         Guid id,
         UpdatePersonalInformationRequest request);
     Task<Result> UpdateCredentialsAsync(Guid id, UpdateCredentialsRequest request);
-    Task<Result<string?>> UpdateUserPhoto(Guid id);
+    Task<Result<string?>> UpdateUserPhoto(Guid id, IFormFile file);
     Task<Result> DeleteUserAsync(Guid id);
 }
