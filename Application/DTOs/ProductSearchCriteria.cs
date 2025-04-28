@@ -5,7 +5,7 @@ public class ProductSearchCriteria
 {
     public string? SearchTerm { get; set; }
     public List<short>? CategoryIds { get; set; }
-    public Gender? Genders { get; set; }
+    public string? Genders { get; set; }
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }
 }

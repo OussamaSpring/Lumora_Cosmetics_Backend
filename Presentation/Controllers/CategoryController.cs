@@ -1,6 +1,5 @@
 ﻿using Application.DTOs.Category;
 using Application.Interfaces.Services;
-using Domain.Entities.ProductRelated;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers;

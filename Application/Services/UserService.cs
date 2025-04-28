@@ -3,6 +3,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Enums.Account;
 using Domain.Shared;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Services;
 
@@ -107,7 +108,7 @@ public class UserService : IUserService
         });
     }
 
-    public async Task<Result<string?>> UpdateUserPhoto(Guid id, IFormFile file) // photo
+    public async Task<Result<string?>> UpdateUserPhoto(Guid id, IFormFile file)
     {
         var user = await _userRepository.GetProfileAsync(id);
         if (user is null)
@@ -115,18 +116,18 @@ public class UserService : IUserService
             return Result<string?>.Failure(new Error("Upload photo", "user does not exist"));
         }
 
-        var url = await _imageService.Upload(file);
-        if (url.Value == null)
+        var uploadImageResult = await _imageService.Upload(file);
+        if (uploadImageResult.IsFailure)
         {
-            return Result<string>.Failure(new Error("Upload photo", "upload photo"));
+            return uploadImageResult;
         }
 
-        user.ProfileImageUrl = url.Value;
-        await _userRepository.UpdateProfileImageAsync(id, url.Value);
+        user.ProfileImageUrl = uploadImageResult.Value;
+        await _userRepository.UpdateProfileImageAsync(id, uploadImageResult.Value);
 
-        return Result<string?>.Success(url.Value);
+        return Result<string?>.Success(uploadImageResult.Value);
     }
-    
+
     public async Task<Result> UpdateCredentialsAsync(
         Guid id,
         UpdateCredentialsRequest request)
@@ -167,5 +168,10 @@ public class UserService : IUserService
         //}
         await _userRepository.DeleteUserAsync(id);
         return Result.Success();
+    }
+
+    public Task<Result<string?>> UpdateUserPhoto(Guid id)
+    {
+        throw new NotImplementedException();
     }
 }
