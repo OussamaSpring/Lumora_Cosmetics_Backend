@@ -2,32 +2,38 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Services;
 using Infrastructure.Persistence;
-using Infrastructure.Persistence.Repositories;
+using Infrastructure.Services;
+using Persistence.Repositories;
+using Microsoft.OpenApi.Any;
 
 namespace API;
 
-public class Program
+// Add CORS - Fixed policy name consistency
+builder.Services.AddCors(options =>
 {
-    public static void Main(string[] args)
-    {
-        var builder = WebApplication.CreateBuilder(args);
+    options.AddPolicy("All",
+        policy => policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials()); // Added if using cookies/auth)
+});
 
-        //builder.Services.Configure<DbConfiguration>(
-        //    builder.Configuration.GetSection("ConnectionStrings"));
+// Configuration
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection(nameof(JwtSettings)));
 
-        builder.Services.Configure<JwtSettings>(
-            builder.Configuration.GetSection(nameof(JwtSettings)));
+// Services
+builder.Services.AddScoped<IDbContext, DbContext>();
+builder.Services.AddScoped<ITokenProvider, JwtTokenProvider>();
+builder.Services.AddScoped<IImageService, ImageService>();
+
+builder.Services.AddRepositories();
+builder.Services.AddServices();
 
 
-        builder.Services.AddScoped<IDbContext,  DbContext>();
-        builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-        builder.Services.AddScoped<IUserAuthentication, UserAuthentication>();
-        builder.Services.AddSingleton<ITokenProvider, JwtTokenProvider>();
 
-
-
-        builder.Services.AddControllers();
-        
+       
         
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
@@ -42,6 +48,11 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
+
+app.UseRouting();
+
+// CORS - Fixed policy name
+app.UseCors("All"); // Now matches the defined policy
 
 
         app.UseHttpsRedirection();

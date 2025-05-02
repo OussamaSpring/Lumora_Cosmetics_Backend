@@ -3,56 +3,53 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities.ShopRelated;
 
-namespace Application.Services
+namespace Application.Services;
+
+public class ShopService : IShopService
 {
-    public class ShopService : IShopService
+    private readonly IShopRepository _shopRepository;
+    public ShopService(IShopRepository shopRepository)
     {
-        private readonly IShopRepository _shopRepository;
+        _shopRepository = shopRepository;
+    }
 
-        public ShopService(IShopRepository shopRepository)
+    public async Task<Shop> CreateShopAsync(UpdateShopDto dto, Guid vendorId)
+    {
+        var existingShop = await _shopRepository.GetShopByVendorIdAsync(vendorId);
+        if (existingShop != null)
         {
-            _shopRepository = shopRepository;
+            throw new InvalidOperationException("A shop already exists for this vendor.");
         }
 
-        public async Task<Shop> CreateShopAsync(UpdateShopDto dto, Guid vendorId)
+        var newShop = new Shop
         {
-            var existingShop = await _shopRepository.GetShopByVendorIdAsync(vendorId);
-            if (existingShop != null)
-            {
-                throw new InvalidOperationException("A shop already exists for this vendor.");
-            }
+            VendorId = vendorId,
+            Name = dto.Name,
+            Description = dto.Description,
+            LogoUrl = dto.LogoUrl,
+            MapAddress = dto.MapAddress,
+            CreateDate = DateTime.UtcNow,
+            UpdateDate = DateTime.UtcNow
+        };
 
-            var newShop = new Shop
-            {
-                VendorId = vendorId,
-                Name = dto.Name,
-                Description = dto.Description,
-                LogoUrl = dto.LogoUrl,
-                MapAddress = dto.MapAddress,
-                CreateDate = DateTime.UtcNow,
-                UpdateDate = DateTime.UtcNow
-            };
+        newShop.Id = await _shopRepository.CreateShopAsync(newShop);
+        return newShop;
+    }
 
-            int id = await _shopRepository.CreateShopAsync(newShop);
-            newShop.Id = id;
-            return (newshop);
+    public async Task UpdateShopAsync(UpdateShopDto dto, Guid vendorId)
+    {
+        var existingShop = await _shopRepository.GetShopByVendorIdAsync(vendorId);
+        if (existingShop == null)
+        {
+            throw new KeyNotFoundException("No shop found for this vendor.");
         }
 
-        public async Task UpdateShopAsync(UpdateShopDto dto, Guid vendorId)
-        {
-            var existingShop = await _shopRepository.GetShopByVendorIdAsync(vendorId);
-            if (existingShop == null)
-            {
-                throw new KeyNotFoundException("No shop found for this vendor.");
-            }
+        existingShop.Name = dto.Name;
+        existingShop.Description = dto.Description;
+        existingShop.LogoUrl = dto.LogoUrl;
+        existingShop.MapAddress = dto.MapAddress;
+        existingShop.UpdateDate = DateTime.UtcNow;
 
-            existingShop.Name = dto.Name;
-            existingShop.Description = dto.Description;
-            existingShop.LogoUrl = dto.LogoUrl;
-            existingShop.MapAddress = dto.MapAddress;
-            existingShop.UpdateDate = DateTime.UtcNow;
-
-            await _shopRepository.UpdateShopAsync(existingShop);
-        }
+        await _shopRepository.UpdateShopAsync(existingShop);
     }
 }

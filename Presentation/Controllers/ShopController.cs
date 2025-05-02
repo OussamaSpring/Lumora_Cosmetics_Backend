@@ -1,5 +1,6 @@
 using Application.DTOs;
 using Application.Interfaces.Services;
+using Domain.Entities.ShopRelated;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers
@@ -9,20 +10,19 @@ namespace Presentation.Controllers
     public class ShopController : ControllerBase
     {
         private readonly IShopService _shopService;
-
         public ShopController(IShopService shopService)
         {
             _shopService = shopService;
         }
 
-        [HttpPost("{vendorId}")]
+        [HttpPost("{vendorId:guid}")]
         public async Task<IActionResult> CreateShop(Guid vendorId, [FromBody] UpdateShopDto dto)
         {
             Shop shop = await _shopService.CreateShopAsync(dto, vendorId);
             return Ok(new { Shop = shop, message = "Shop created successfully" });
         }
 
-        [HttpPut("{vendorId}")]
+        [HttpPut("{vendorId:guid}")]
         public async Task<IActionResult> UpdateShop(Guid vendorId, [FromBody] UpdateShopDto dto)
         {
             await _shopService.UpdateShopAsync(dto, vendorId);
