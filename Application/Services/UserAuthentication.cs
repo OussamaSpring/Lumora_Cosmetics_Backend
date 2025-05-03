@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 ﻿using System.Security.Cryptography.X509Certificates;
 using Application.DTOs;
+=======
+﻿using Application.DTOs;
+using Application.DTOs.Category;
+>>>>>>> origin/main
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities.AccountRelated;
@@ -18,17 +23,20 @@ public class UserAuthentication : IUserAuthentication
         _tokenProvider = tokenProvider;
     }
 
-    public Result<string?> Login(LoginRequest loginRequest)
+    public async Task<Result<string?>> Login(LoginRequest loginRequest)
     {
         try
         {
-            var user = _authRepository.GetUserByUsernameOrEmailAsync(loginRequest.UsernameOrEmail).Result;
+            var user = await _authRepository.GetUserByUsernameOrEmailAsync(loginRequest.UsernameOrEmail);
             if (user is null)
             {
                 return Result<string>.Failure(new Error("Login", "this user does not exist"));
             }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             if (!auth(loginRequest, user))
             {
                 return Result<string>.Failure(new Error("Login", "user name or password is wrong"));
@@ -50,11 +58,25 @@ public class UserAuthentication : IUserAuthentication
         }
     }
 
+<<<<<<< HEAD
     public Result<string?> Register(RegisterRequest registerRequest, UserRole userRole)
     {
         try
         {
             if (_authRepository.EmailExistsAsync(registerRequest.Email).Result)
+=======
+    public async Task<Result<string?>> Register(RegisterRequest register, UserRole userRole)
+    {
+        try
+        {
+            if (await _authRepository.UsernameExistsAsync(register.Username))
+            {
+                return Result<string>.Failure(new Error("Register", "username already using"));
+            }
+
+            // exception in unique constraint ???
+            if (await _authRepository.EmailExistsAsync(register.Email))
+>>>>>>> origin/main
             {
                 return Result<string>.Failure(new Error("Register", "email already using"));
             }
@@ -80,6 +102,7 @@ public class UserAuthentication : IUserAuthentication
 
             var user = new User
             {
+<<<<<<< HEAD
                 Username = registerRequest.Username,
                 Email = registerRequest.Email,
                 Password = HasherSHA256.Hash(registerRequest.Password),
@@ -92,6 +115,27 @@ public class UserAuthentication : IUserAuthentication
 
             var userId = _authRepository.CreateUserAsync(user).Result;
             user.UserId = userId;
+=======
+                Username = register.Username,
+                Email = register.Email,
+                Password = HasherSHA256.Hash(register.Password),
+                FirstName = register.FirstName,
+                MiddleName = register.MiddleName,
+                LastName = register.LastName,
+                DateOfBirth = register.DateOfBirth,
+                PhoneNumber = register.PhoneNumber,
+                Gender = register.Gender,
+                ProfileImageUrl = string.Empty, // profile image (nullable)
+                Role = userRole,
+                AccountStatus = AccountStatus.Active,
+                CreateDate = DateTime.Now,
+                UpdateDate = DateTime.Now,
+
+            };
+
+            var userId = await _authRepository.CreateUserAsync(user);
+            user.Id = userId;
+>>>>>>> origin/main
 
             return Result<string>.Success(_tokenProvider.GenerateToken(user))!;
         }

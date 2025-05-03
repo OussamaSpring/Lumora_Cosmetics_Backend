@@ -29,4 +29,11 @@ public interface IProductRepository
         you have to update it first and put null in the image id column
         then call this function to delete the image from images table
      */
+<<<<<<< HEAD
+=======
+
+
+    Task<IEnumerable<Product>> SearchProductsAsync(ProductSearchCriteria criteria);
+
+>>>>>>> origin/main
 }

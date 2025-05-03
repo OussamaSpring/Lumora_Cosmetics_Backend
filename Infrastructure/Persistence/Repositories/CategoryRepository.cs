@@ -29,15 +29,13 @@ public class CategoryRepository : ICategoryRepository
     public async Task<Category?> GetCategoryByIdAsync(int categoryId)
     {
         using var connection = _databaseContext.CreateConnection();
-        await connection.OpenAsync();
-
-        // First get the category
-        const string categoryQuery = @"
-                SELECT id, name, description, parent_id
+        const string sql = @"
+                SELECT id, name, description
                 FROM category
                 WHERE id = @categoryId";
 
-        using var categoryCommand = new NpgsqlCommand(categoryQuery, connection);
+        await connection.OpenAsync();
+        using var categoryCommand = new NpgsqlCommand(sql, connection);
         categoryCommand.Parameters.AddWithValue("@categoryId", categoryId);
 
         Category? category = null;
@@ -47,7 +45,7 @@ public class CategoryRepository : ICategoryRepository
 
         if (await reader.ReadAsync())
         {
-            category = new Category
+            return new Category
             {
                 Id = reader.GetInt32(0),
                 Name = reader.GetString(1),
@@ -58,8 +56,8 @@ public class CategoryRepository : ICategoryRepository
 
         if (category == null) // get rid of the warning
         {
-            return null;
-        }
+        return null;
+    }
 
 
         int? parent2Id = null;
@@ -175,55 +173,70 @@ public class CategoryRepository : ICategoryRepository
         return variantTypes;
     }
 
+    public async Task<int> CreateAsync(Category category)
+    {
+        using var connection = _databaseContext.CreateConnection();
+        const string sql = @"INSERT INTO category (name, description) VALUES (@Name, @Description) RETURNING id";
+
+        await connection.OpenAsync();
+        using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@Name", category.Name);
+        command.Parameters.AddWithValue("@Description",
+            category.Description is null ? DBNull.Value : category.Description);
+
+        return (short)await command.ExecuteScalarAsync();
+    }
+
+    public async Task<Category?> DeleteAsync(int categoryId)
+    {
+        var category = await GetCategoryByIdAsync(categoryId);
+
+        using var connection = _databaseContext.CreateConnection();
+        const string sql = @"DELETE FROM category WHERE id = @Id";
+
+        await connection.OpenAsync();
+        using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@Id", categoryId);
+        await command.ExecuteNonQueryAsync();
+
+        return category;
+    }
+
+    public async Task UpdateCategoryAsync(int categoryId, Category category)
+    {
+        using var connection = _databaseContext.CreateConnection();
+        const string sql = @"UPDATE category
+                            SET name = @Name, description = @Description
+                            WHERE id = @Id";
+
+        await connection.OpenAsync();
+        using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@Name", category.Name);
+        command.Parameters.AddWithValue("@Description",
+            category.Description is null ? DBNull.Value : category.Description);
+        command.Parameters.AddWithValue("@Id", categoryId);
+        await command.ExecuteNonQueryAsync();
+    }
 
     public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
     {
         using var connection = _databaseContext.CreateConnection();
+        const string sql = @"SELECT id, name, description FROM category";
+
         await connection.OpenAsync();
+        using var command = new NpgsqlCommand(sql, connection);
+        var reader = await command.ExecuteReaderAsync();
 
-        // First get all categories
-        const string query = @"
-            SELECT id, name, description, parent_id
-            FROM category
-            ORDER BY parent_id NULLS FIRST, name";
-
-        using var command = new NpgsqlCommand(query, connection);
-
-        var categories = new Dictionary<int, Category>();
-        var parentRelations = new Dictionary<int, int?>();
-
-        using var reader = await command.ExecuteReaderAsync();
-
+        var categories = new List<Category>();
         while (await reader.ReadAsync())
         {
-            var category = new Category
+            categories.Add(new Category
             {
                 Id = reader.GetInt32(0),
                 Name = reader.GetString(1),
-                Description = reader.IsDBNull(2) ? null : reader.GetString(2)
-            };
-
-            categories[category.Id] = category;
-            parentRelations[category.Id] = reader.IsDBNull(3) ? null : reader.GetInt32(3);
+                Description = reader.GetString(2)
+            });
         }
-
-        // Build parent relationships
-        foreach (var kvp in parentRelations)
-        {
-            if (kvp.Value.HasValue && categories.TryGetValue(kvp.Value.Value, out var parent))
-            {
-                categories[kvp.Key].Parent = parent;
-            }
-        }
-
-        return categories.Values;
+        return categories;
     }
-
-
-
-
-
-
-
-    #endregion
 }

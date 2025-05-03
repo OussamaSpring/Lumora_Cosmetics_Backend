@@ -39,7 +39,10 @@ public sealed class JwtTokenProvider : ITokenProvider
                 Issuer = _jwtSettings.Issuer,
                 Audience = _jwtSettings.Audience,
             };
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             var handler = new JsonWebTokenHandler();
 
             return handler.CreateToken(tokenDescriptor);

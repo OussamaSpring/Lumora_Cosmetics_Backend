@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿
 
 using Domain.Entities.ProductRelated;
@@ -56,4 +57,16 @@ namespace Application.DTOs
         public string Range { get; set; }
         public int Count { get; set; }
     }
+=======
+using Domain.Entities.ProductRelated;
+using Domain.Enums.Product;
+
+public class ProductSearchCriteria
+{
+    public string? SearchTerm { get; set; }
+    public List<short>? CategoryIds { get; set; }
+    public Gender? Genders { get; set; }
+    public decimal? MinPrice { get; set; }
+    public decimal? MaxPrice { get; set; }
+>>>>>>> origin/main
 }
