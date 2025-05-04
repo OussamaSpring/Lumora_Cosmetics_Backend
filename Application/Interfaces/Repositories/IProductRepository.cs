@@ -1,4 +1,4 @@
-﻿using Domain.Entities.ProductRelated;
+using Domain.Entities.ProductRelated;
 
 namespace Application.Interfaces.Repositories;
 public interface IProductRepository
@@ -7,7 +7,7 @@ public interface IProductRepository
     Task<IEnumerable<Product>> GetProductsByShopAsync(int shopId);
     Task<int> CreateProductAsync(Product product); // it aslso get you the image url
     Task<bool> UpdateProductAsync(Product product);
-    // Task<bool> DeleteProductAsync(int productId);
+    Task<bool> DeleteProductAsync(int productId);
 
     Task<ProductItem?> GetProductItemByIdAsync(int productItemId);
     Task<IEnumerable<ProductItem>> GetProductItemsByProductIdAsync(int productId);
@@ -25,6 +25,7 @@ public interface IProductRepository
     Task<int> AddProductItemImageAsync(int productItemId, ProductImage image);
 
     Task<bool> DeleteProductImageAsync(int imageId); // just delete the image from images table
+    Task<ProductImage> GetProductImageByIdAsync(int imageId);
     /* before calling this function (if you want to delete the image from product item)
         you have to update it first and put null in the image id column
         then call this function to delete the image from images table

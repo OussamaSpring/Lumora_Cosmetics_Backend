@@ -7,6 +7,7 @@ using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add CORS - Fixed policy name consistency
@@ -53,6 +54,11 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddRepositories();
 builder.Services.AddServices();
 
+
+
+
+builder.Services.AddScoped<IProductService, ProductService>();
+// Controllers - Removed duplicate registration
 
 builder.Services.AddControllers();
 

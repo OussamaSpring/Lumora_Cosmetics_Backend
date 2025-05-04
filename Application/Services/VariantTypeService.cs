@@ -9,12 +9,10 @@ namespace Application.Services;
 
 public class VariantTypeService : IVariantTypeService
 {
-    private readonly IVarianteTypeRepository _variantTypeRepository;
+    private readonly IVariantTypeRepository _variantTypeRepository;
     private readonly ICategoryRepository _categoryRepository;
 
-    public VariantTypeService(
-        ICategoryRepository categoryRepository,
-        IVarianteTypeRepository varianteTypeRepository)
+    public VariantTypeService(ICategoryRepository categoryRepository, IVariantTypeRepository varianteTypeRepository)
     {
         _categoryRepository = categoryRepository;
         _variantTypeRepository = varianteTypeRepository;
