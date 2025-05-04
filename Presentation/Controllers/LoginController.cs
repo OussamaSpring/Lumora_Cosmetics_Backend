@@ -29,6 +29,7 @@ public class LoginController : ControllerBase
             AccessToken = result.Value
         }) : BadRequest(new
         {
+            result.Error,
             ErrorMessage = result.Error.description
         });
     }

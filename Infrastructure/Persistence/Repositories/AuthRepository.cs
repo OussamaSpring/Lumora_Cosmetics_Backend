@@ -47,7 +47,7 @@ public class AuthRepository : IAuthRepository
                 FirstName = reader.GetString(6),
                 LastName = reader.GetString(7),
                 DateOfBirth = reader.GetValue(8) != DBNull.Value ? reader.GetDateTime(8) : null,
-                Gender = reader.IsDBNull(9) ? null : ParseGender(reader.GetString(8)),
+                Gender = ParseGender(reader.GetString(9)),
                 Email = reader.GetString(10),
                 PhoneNumber = reader.GetValue(11) != DBNull.Value ? reader.GetInt64(11) : null,
                 CreateDate = reader.GetDateTime(12),
@@ -57,10 +57,10 @@ public class AuthRepository : IAuthRepository
         return null;
     }
 
-    private static Gender? ParseGender(string genderValue)
+    private static Gender ParseGender(string genderValue)
     {
         if (string.IsNullOrEmpty(genderValue))
-            return null;
+            return Gender.Unknown;
 
         return genderValue switch
         {
@@ -79,7 +79,10 @@ public class AuthRepository : IAuthRepository
         using var command = new NpgsqlCommand(query, connection);
         command.Parameters.AddWithValue("@username", username);
 
-        return await command.ExecuteNonQueryAsync() > 0;
+        int value = await command.ExecuteNonQueryAsync();
+        Console.WriteLine(value);
+
+        return value > 0;
     }
 
     public async Task<bool> EmailExistsAsync(string email)
@@ -91,7 +94,10 @@ public class AuthRepository : IAuthRepository
         using var command = new NpgsqlCommand(query, connection);
         command.Parameters.AddWithValue("@email", email);
 
-        return await command.ExecuteNonQueryAsync() > 0;
+        int value = await command.ExecuteNonQueryAsync();
+        Console.WriteLine(value);
+
+        return value > 0;
     }
 
     public async Task<Guid> CreateUserAsync(User user)
@@ -114,10 +120,7 @@ public class AuthRepository : IAuthRepository
             "@middleName", user.MiddleName is null ? DBNull.Value : user.MiddleName);
         command1.Parameters.AddWithValue(
             "@dateOfBirth", user.DateOfBirth is null ? DBNull.Value : user.DateOfBirth);
-        //command1.Parameters.AddWithValue(
-        //    "@gender", user.Gender?.ToString() ?? (object)DBNull.Value);
-        command1.Parameters.AddWithValue(
-            "@gender", user.Gender is null ? DBNull.Value : user.Gender.Value.ToString());
+        command1.Parameters.AddWithValue("@gender", user.Gender.ToString());
         command1.Parameters.AddWithValue("@email", user.Email);
         command1.Parameters.AddWithValue(
             "@phoneNumber", user.PhoneNumber is null ? DBNull.Value : user.PhoneNumber);

@@ -58,5 +58,5 @@ public record RegisterRequest(
     string? MiddleName,
     string LastName,
     DateTime? DateOfBirth,
-    Gender? Gender,
+    string? Gender,
     long? PhoneNumber);

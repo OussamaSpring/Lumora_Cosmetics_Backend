@@ -1,30 +1,51 @@
+using System.Text;
 using API;
-using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Services;
-using Infrastructure.Persistence.Repositories;
 using Infrastructure.Persistence;
 using Infrastructure.Services;
-using Persistence.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add CORS - Fixed policy name consistency
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("ReactApp",  // Changed to match usage below
+    options.AddPolicy("AllowAll",
         policy => policy
-            .WithOrigins("http://localhost:3000", "https://localhost:3000") // Added HTTPS
+            .AllowAnyOrigin()
             .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials()); // Added if using cookies/auth
+            .AllowAnyHeader());
+            //.AllowCredentials());
 });
 
-// Configuration
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!))
+    };
+});
+
+builder.Services.AddAuthorization();
+
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection(nameof(JwtSettings)));
 
-// Services
 builder.Services.AddScoped<IDbContext, DbContext>();
 builder.Services.AddScoped<ITokenProvider, JwtTokenProvider>();
 builder.Services.AddScoped<IImageService, ImageService>();
@@ -33,34 +54,24 @@ builder.Services.AddRepositories();
 builder.Services.AddServices();
 
 
-//builder.Services.AddScoped<IProductRepository, ProductRepository>();
-//builder.Services.AddScoped<IProductService, ProductService>();
-
-//builder.Services.AddScoped<ISearchService, SearchService>();
-
-
-// Controllers - Removed duplicate registration
 builder.Services.AddControllers();
+
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Middleware pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(); 
-}
+app.UseSwagger();
+app.UseSwaggerUI(); 
+
 
 app.UseRouting();
 
-// CORS - Fixed policy name
-app.UseCors("ReactApp"); // Now matches the defined policy
+app.UseCors("AllowAll");
 
+app.UseAuthentication();
 
-// Authentication/Authorization
-app.UseAuthentication(); // Added this missing middleware
 app.UseAuthorization();
 
 app.MapControllers();

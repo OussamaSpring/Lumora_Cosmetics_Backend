@@ -46,7 +46,6 @@ public class UserService : IUserService
                 PhoneNumber = user.PhoneNumber,
                 ProfileImageUrl = user.ProfileImageUrl,
                 Gender = user.Gender,
-                //Addresses = addresses,
             });
     }
 
@@ -143,7 +142,7 @@ public class UserService : IUserService
         user.Password = HasherSHA256.Hash(request.password);
         user.UpdateDate = DateTime.UtcNow;
 
-        await _userRepository.UpdatePersonalInformationAsync(user.Id, user);
+        await _userRepository.UpdateCredentialsAsync(user.Id, user);
         return Result.Success();
 
     }
@@ -162,10 +161,10 @@ public class UserService : IUserService
 
     public async Task<Result> DeleteUserAsync(Guid id)
     {
-        //if (await _userRepository.GetProfileAsync(id) is null)
-        //{
-        //    return Result.Failure(new Error("dad", "dada"));
-        //}
+        if (await _userRepository.GetProfileAsync(id) is null)
+        {
+            return Result.Failure(new Error("user does not exist", "user does not exist"));
+        }
         await _userRepository.DeleteUserAsync(id);
         return Result.Success();
     }
