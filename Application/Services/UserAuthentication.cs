@@ -20,8 +20,8 @@ public class UserAuthentication : IUserAuthentication
 
     public async Task<Result<string?>> Login(LoginRequest loginRequest)
     {
-        try
-        {
+        //try
+        //{
             var user = await _authRepository.GetUserByUsernameOrEmailAsync(loginRequest.UsernameOrEmail);
             if (user is null)
             {
@@ -34,12 +34,12 @@ public class UserAuthentication : IUserAuthentication
             }
 
             return Result<string>.Success(_tokenProvider.GenerateToken(user))!;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.StackTrace);
-            return Result<string>.Failure(new Error("Internal Server Error", ex.Message));
-        }
+        //}
+        //catch (Exception ex)
+        //{
+        //    Console.WriteLine(ex.StackTrace);
+        //    return Result<string>.Failure(new Error("Internal Server Error", ex.Message));
+        //}
 
         static bool auth(LoginRequest loginRequest, User user)
         {
@@ -74,7 +74,7 @@ public class UserAuthentication : IUserAuthentication
                 LastName = register.LastName,
                 DateOfBirth = register.DateOfBirth,
                 PhoneNumber = register.PhoneNumber,
-                Gender = register.Gender,
+                Gender =  Convert(register.Gender),
                 ProfileImageUrl = string.Empty, // profile image (nullable)
                 Role = userRole,
                 AccountStatus = AccountStatus.Active,
@@ -94,4 +94,16 @@ public class UserAuthentication : IUserAuthentication
             return Result<string>.Failure(new Error("Internal Server Error", ex.Message));
         }
     }
+    private Gender Convert(string? value)
+    {
+        if (value is null)
+            return Gender.Unknown;
+
+        if (value.CompareTo("Male") == 0)
+            return Gender.Male;
+        if (value.CompareTo("Female") == 0)
+            return Gender.Female;
+        return Gender.Unknown;
+    }
+
 }

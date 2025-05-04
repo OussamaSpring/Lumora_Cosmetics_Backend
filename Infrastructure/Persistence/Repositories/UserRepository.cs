@@ -74,13 +74,21 @@ public class UserRepository : IUserRepository
             user.MiddleName is null ? DBNull.Value : user.MiddleName);
         command.Parameters.AddWithValue("@DateOfBirth",
             user.DateOfBirth is null ? DBNull.Value : user.DateOfBirth);
-        command.Parameters.AddWithValue("@Gender", DBNull.Value);
-            //user.Gender is not null ? user.Gender.Value.ToString() : DBNull.Value);
+        command.Parameters.AddWithValue("@Gender", user.Gender.ToString());
         command.Parameters.AddWithValue("@PhoneNumber",
             user.PhoneNumber is null ? DBNull.Value : user.PhoneNumber);
         command.Parameters.AddWithValue("@UpdateDate", user.UpdateDate);
         command.Parameters.AddWithValue("@Id", userId);
-        command.ExecuteNonQuery();
+
+        const string sql2 = @"UPDATE ""user""
+                              SET username = @UserName
+                              WHERE id = @Id";
+
+        using var command2 = new NpgsqlCommand(sql2, connection);
+        command2.Parameters.AddWithValue("@UserName", user.Username);
+        command2.Parameters.AddWithValue("@Id", userId);
+
+        command2.ExecuteNonQuery();
     }
 
     public async Task UpdateProfileImageAsync(Guid userId, string imageUrl)
@@ -112,8 +120,11 @@ public class UserRepository : IUserRepository
 
         using var command1 = new NpgsqlCommand(sql1, connection);
         command1.Parameters.AddWithValue("@Password", user.Password);
+        command1.Parameters.AddWithValue("@Id", userId);
+
         using var command2 = new NpgsqlCommand(sql2, connection);
         command2.Parameters.AddWithValue("@Email", user.Email);
+        command2.Parameters.AddWithValue("@Id", userId);
 
 
         await command1.ExecuteNonQueryAsync();
