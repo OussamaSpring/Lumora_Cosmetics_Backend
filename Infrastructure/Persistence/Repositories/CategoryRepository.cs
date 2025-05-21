@@ -159,4 +159,28 @@ public class CategoryRepository : ICategoryRepository
         }
         return categories;
     }
+
+    public async Task<IEnumerable<short>?> GetChildCategoriesIDsAsync(List<short> ParentIDs)
+    {
+        using var connection = _databaseContext.CreateConnection();
+
+        const string sql = @"SELECT id FROM category WHERE parent_id = ANY (@ParentID)";
+
+
+        await connection.OpenAsync();
+
+        using var command = new NpgsqlCommand(sql, connection);
+
+        command.Parameters.AddWithValue("@ParentID", ParentIDs.ToArray());
+
+        using var reader = await command.ExecuteReaderAsync();
+
+        var categoryIDs = new List<short>();
+
+        while (await reader.ReadAsync())
+        {
+            categoryIDs.Add(reader.GetInt16(0));
+        }
+        return categoryIDs;
+    }
 }

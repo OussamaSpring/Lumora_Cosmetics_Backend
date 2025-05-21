@@ -12,6 +12,9 @@ public interface ICategoryRepository
     Task<Category?> DeleteAsync(int categoryId);
     Task UpdateCategoryAsync(int categoryId, Category category);
 
+
+    Task<IEnumerable<short>?> GetChildCategoriesIDsAsync(List<short> ParentIDs); // This is for the search service
+
     /*
      * The methods below are commented out because they are not used in the current implementation.
      * They are realted to the admin functionalities.
