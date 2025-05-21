@@ -1,53 +1,85 @@
-using Application.Interfaces.Repositories;
+using System.Text;
+using API;
 using Application.Interfaces.Services;
 using Application.Services;
 using Infrastructure.Persistence;
-using Infrastructure.Persistence.Repositories;
+using Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
-namespace API;
 
-public class Program
+var builder = WebApplication.CreateBuilder(args);
+
+// Add CORS - Fixed policy name consistency
+builder.Services.AddCors(options =>
 {
-    public static void Main(string[] args)
+    options.AddPolicy("AllowAll",
+        policy => policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+            //.AllowCredentials());
+});
+
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        var builder = WebApplication.CreateBuilder(args);
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!))
+    };
+});
 
-        //builder.Services.Configure<DbConfiguration>(
-        //    builder.Configuration.GetSection("ConnectionStrings"));
+builder.Services.AddAuthorization();
 
-        builder.Services.Configure<JwtSettings>(
-            builder.Configuration.GetSection(nameof(JwtSettings)));
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection(nameof(JwtSettings)));
 
+builder.Services.AddScoped<IDbContext, DbContext>();
+builder.Services.AddScoped<ITokenProvider, JwtTokenProvider>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
-        builder.Services.AddScoped<IDbContext,  DbContext>();
-        builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-        builder.Services.AddScoped<IUserAuthentication, UserAuthentication>();
-        builder.Services.AddSingleton<ITokenProvider, JwtTokenProvider>();
-
-
-
-        builder.Services.AddControllers();
-        
-        
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
-
-
-        builder.Services.AddControllers();
-
-        var app = builder.Build();
-
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
+builder.Services.AddRepositories();
+builder.Services.AddServices();
 
 
-        app.UseHttpsRedirection();
-        app.UseAuthorization();
-        app.MapControllers();
 
-        app.Run();
-    }
-}
+
+builder.Services.AddScoped<IProductService, ProductService>();
+// Controllers - Removed duplicate registration
+
+builder.Services.AddControllers();
+
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI(); 
+
+
+app.UseRouting();
+
+app.UseCors("AllowAll");
+
+app.UseAuthentication();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

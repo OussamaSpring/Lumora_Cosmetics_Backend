@@ -17,5 +17,5 @@ public class Product
     public short CategoryId { get; set; }
     public ProductStatus Status { get; set; }
     public string? ImageUrl { get; set; }
-    public decimal? MinPrice { get; set; }
+    public decimal? MinPrice { get; set; } // we need it to show the customer a price
 }

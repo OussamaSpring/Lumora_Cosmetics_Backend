@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 
 using System.Text.Json;
 using System.Text;
@@ -36,12 +36,14 @@ public class ProductRepository : IProductRepository
             About = reader.IsDBNull(5) ? null : reader.GetString(5),
             Ingredients = reader.IsDBNull(6) ? null : reader.GetString(6),
             HowToUse = reader.IsDBNull(7) ? null : reader.GetString(7),
-            Gender = (Gender)reader.GetInt16(8),
+            Gender = Enum.Parse<Gender>(reader.GetString(8)),
             CreateDate = reader.GetDateTime(9),
             UpdateDate = reader.GetDateTime(10),
             CategoryId = reader.GetInt16(11),
             Status = (ProductStatus)reader.GetInt16(12),
-            ImageUrl = reader.IsDBNull(13) ? null : reader.GetString(13)
+            ImageUrl = reader.IsDBNull(13) ? null : reader.GetString(13),
+            MinPrice = reader.IsDBNull(14) ? null : reader.GetDecimal(14)
+
         };
     }
     private ProductItem MapProductItem(NpgsqlDataReader reader)
@@ -86,13 +88,16 @@ public class ProductRepository : IProductRepository
         await connection.OpenAsync();
 
         const string query = @"
-                SELECT 
-                    p.id, p.shop_id, p.serial_number, p.name, p.brand, p.about, 
-                    p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
-                    p.category_id, p.status,
-                    pi.url as image_url
-                FROM product p
-                LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
+                SELECT DISTINCT (p.id), p.shop_id, p.serial_number, p.name, p.brand, p.about, 
+                   p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
+                   p.category_id, p.status,
+                   pi.url as image_url,
+                   (SELECT MIN(pit.original_price) 
+                    FROM product_item pit 
+                    WHERE pit.product_id = p.id) as min_price
+            FROM product p
+            LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
+            LEFT JOIN product_item pit on pit.product_id = p.id
                 WHERE p.id = @productId";
 
         using var command = new NpgsqlCommand(query, connection);
@@ -116,13 +121,16 @@ public class ProductRepository : IProductRepository
         await connection.OpenAsync();
 
         const string query = @"
-                SELECT 
-                    p.id, p.shop_id, p.serial_number, p.name, p.brand, p.about, 
-                    p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
-                    p.category_id, p.status,
-                    pi.url as image_url
-                FROM product p
-                LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
+                SELECT DISTINCT (p.id), p.shop_id, p.serial_number, p.name, p.brand, p.about, 
+                   p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
+                   p.category_id, p.status,
+                   pi.url as image_url,
+                   (SELECT MIN(pit.original_price) 
+                    FROM product_item pit 
+                    WHERE pit.product_id = p.id) as min_price
+            FROM product p
+            LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
+            LEFT JOIN product_item pit on pit.product_id = p.id
                 WHERE p.shop_id = @shopId";
 
         using var command = new NpgsqlCommand(query, connection);
@@ -552,10 +560,86 @@ public class ProductRepository : IProductRepository
         return await command.ExecuteNonQueryAsync() > 0;
     }
 
+    public async Task<bool> DeleteProductAsync(int productId)
+    {
+        using var connection = _databaseContext.CreateConnection();
+        await connection.OpenAsync();
+
+        using var transaction = await connection.BeginTransactionAsync();
+
+        try
+        {
+            // 1. First delete all product images
+            const string deleteImagesSql = "DELETE FROM product_image WHERE product_id = @productId";
+            using var deleteImagesCommand = new NpgsqlCommand(deleteImagesSql, connection, transaction);
+            deleteImagesCommand.Parameters.AddWithValue("@productId", productId);
+            await deleteImagesCommand.ExecuteNonQueryAsync();
+
+            // 2. Get all product items (variants) to delete their stocks
+            const string getItemsSql = "SELECT id FROM product_item WHERE product_id = @productId";
+            using var getItemsCommand = new NpgsqlCommand(getItemsSql, connection, transaction);
+            getItemsCommand.Parameters.AddWithValue("@productId", productId);
+
+            var itemIds = new List<int>();
+            using (var reader = await getItemsCommand.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    itemIds.Add(reader.GetInt32(0));
+                }
+            }
+
+            // 3. Delete each product item and its stock
+            foreach (var itemId in itemIds)
+            {
+                // Get stock ID first
+                const string getStockIdSql = "SELECT stock_id FROM product_item WHERE id = @itemId";
+                using var getStockIdCommand = new NpgsqlCommand(getStockIdSql, connection, transaction);
+                getStockIdCommand.Parameters.AddWithValue("@itemId", itemId);
+                var stockId = (int?)await getStockIdCommand.ExecuteScalarAsync();
+
+                if (stockId.HasValue)
+                {
+                    // Delete stock
+                    const string deleteStockSql = "DELETE FROM stock WHERE id = @stockId";
+                    using var deleteStockCommand = new NpgsqlCommand(deleteStockSql, connection, transaction);
+                    deleteStockCommand.Parameters.AddWithValue("@stockId", stockId.Value);
+                    await deleteStockCommand.ExecuteNonQueryAsync();
+                }
+
+                // Delete product item
+                const string deleteItemSql = "DELETE FROM product_item WHERE id = @itemId";
+                using var deleteItemCommand = new NpgsqlCommand(deleteItemSql, connection, transaction);
+                deleteItemCommand.Parameters.AddWithValue("@itemId", itemId);
+                await deleteItemCommand.ExecuteNonQueryAsync();
+            }
+
+            // 4. Finally delete the product itself
+            const string deleteProductSql = "DELETE FROM product WHERE id = @productId";
+            using var deleteProductCommand = new NpgsqlCommand(deleteProductSql, connection, transaction);
+            deleteProductCommand.Parameters.AddWithValue("@productId", productId);
+            int rowsAffected = await deleteProductCommand.ExecuteNonQueryAsync();
+
+            await transaction.CommitAsync();
+            return rowsAffected > 0;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
     #endregion
 
 
     #region SearchData
+
+    /* I applied here the Faceted Search, see the below references:
+         * https://stackoverflow.com/questions/5321595/what-is-faceted-search
+         * Also use ChatGPT for explanation
+         */
+
 
     public async Task<IEnumerable<Product>> SearchProductsAsync(ProductSearchCriteria criteria)
     {
@@ -583,10 +667,11 @@ public class ProductRepository : IProductRepository
     private string BuildQueries(ProductSearchCriteria criteria)
     {
         // Product entity with added column for the lowest price in the product items collection
+
         var productsQuery = new StringBuilder(@"
             SELECT DISTINCT (p.id), p.shop_id, p.serial_number, p.name, p.brand, p.about, 
                    p.ingredients, p.how_to_use, p.gender, p.create_date, p.update_date,
-                   p.category_id, p.status_id,
+                   p.category_id, p.status,
                    pi.url as image_url,
                    (SELECT MIN(pit.original_price) 
                     FROM product_item pit 
@@ -594,17 +679,11 @@ public class ProductRepository : IProductRepository
             FROM product p
             LEFT JOIN product_image pi ON pi.product_id = p.id AND pi.is_primary = true
             LEFT JOIN product_item pit on pit.product_id = p.id
-            WHERE p.status_id = (SELECT id FROM product_status WHERE name = 'Published')");
+            WHERE p.status = (SELECT id FROM product_status WHERE name = 'Published')");
 
 
         // Add filters
-        if (!string.IsNullOrWhiteSpace(criteria.SearchTerm))
-        {
-            var searchTerm = @" AND (p.name ILIKE @searchTerm OR p.about ILIKE @searchTerm OR 
-                                         p.brand ILIKE @searchTerm OR p.ingredients ILIKE @searchTerm OR
-                                         p.how_to_use ILIKE @searchTerm)";
-            productsQuery.Append(searchTerm);
-        }
+
 
         if (criteria.CategoryIds?.Count > 0)
         {
@@ -612,7 +691,7 @@ public class ProductRepository : IProductRepository
             productsQuery.Append(categories);
         }
 
-        if (criteria.Genders.HasValue)
+        if (criteria.Genders is not null)
         {
             var gender = " AND p.gender = @gender";
             productsQuery.Append(gender);
@@ -628,6 +707,14 @@ public class ProductRepository : IProductRepository
         {
             var maxPrice = " AND pit.original_price <= @maxPrice";
             productsQuery.Append(maxPrice);
+        }
+
+        if (!string.IsNullOrWhiteSpace(criteria.SearchTerm))
+        {
+            var searchTerm = @" AND (p.name ILIKE @searchTerm OR p.about ILIKE @searchTerm OR 
+                                         p.brand ILIKE @searchTerm OR p.ingredients ILIKE @searchTerm OR
+                                         p.how_to_use ILIKE @searchTerm)";
+            productsQuery.Append(searchTerm);
         }
 
 
@@ -650,7 +737,7 @@ public class ProductRepository : IProductRepository
             command.Parameters.AddWithValue("@categoryIds", criteria.CategoryIds.ToArray());
         }
 
-        if (criteria.Genders.HasValue)
+        if (criteria.Genders is not null)
         {
             command.Parameters.AddWithValue("@gender", criteria.Genders.ToString());
         }
@@ -668,7 +755,6 @@ public class ProductRepository : IProductRepository
 
         return command;
     }
-
 
     #endregion
 
