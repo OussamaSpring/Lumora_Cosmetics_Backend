@@ -36,7 +36,6 @@ public class AddressService : IAddressService
 
         address.Id = await _addressRepository.AddAddressAsync(userId, address);
         return Result<Address?>.Success(address);
-
     }
 
     public async Task<Result> DeleteAddress(int id)

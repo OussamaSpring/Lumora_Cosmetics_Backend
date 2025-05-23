@@ -1,7 +1,6 @@
 ﻿using System.Security.Claims;
 using Application.DTOs.Profile;
 using Application.Interfaces.Services;
-using Domain.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,16 +23,11 @@ public class ProfileController : ControllerBase
     public async Task<ActionResult> GetProfileAsync()
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(Result
-                .Failure(new Error("Register request input", "Invalid")));
-        }
+            return BadRequest("Invalid");
 
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out Guid id))
-        {
-            return BadRequest("id fault");
-        }
+            return BadRequest("Invalid JWT token");
 
         var result = await _userService.GetUser(id);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error.description);
@@ -44,16 +38,11 @@ public class ProfileController : ControllerBase
         UpdatePersonalInformationRequest request)
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(Result
-                .Failure(new Error("Register request input", "Invalid")));
-        }
+            return BadRequest("Register request input");
 
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out Guid id))
-        {
             return BadRequest("id fault");
-        }
 
         var result = await _userService.UpdateProfileInformationAsync(id, request);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
@@ -64,56 +53,41 @@ public class ProfileController : ControllerBase
         UpdateCredentialsRequest request)
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(Result
-                .Failure(new Error("Register request input", "Invalid")));
-        }
+            return BadRequest("Register request input");
 
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out Guid id))
-        {
             return BadRequest("id fault");
-        }
 
         var result = await _userService.UpdateCredentialsAsync(id, request);
-        return result.IsSuccess ? Ok() : BadRequest(result.Error);
+        return result.IsSuccess ? NoContent() : BadRequest(result.Error.description);
     }
 
     [HttpPut("update-photo/")]
     public async Task<IActionResult> UpdatePhoto(IFormFile file)
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(Result
-                .Failure(new Error("Register request input", "Invalid")));
-        }
+            return BadRequest("Register request input");
 
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out Guid id))
-        {
             return BadRequest("id fault");
-        }
 
         var result = await _userService.UpdateUserPhoto(id, file);
-        return result.IsSuccess ? Ok(result.Value): BadRequest(result.Error);
+        return result.IsSuccess ? Ok(result.Value): BadRequest(result.Error.description);
     }
 
     [HttpDelete]
     public async Task<IActionResult> DeleteUser()
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(Result
-                .Failure(new Error("Register request input", "Invalid")));
-        }
+            return BadRequest("Register request input");
 
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userId, out Guid id))
-        {
             return BadRequest("id fault");
-        }
 
         var result = await _userService.DeleteUserAsync(id);
-        return result.IsSuccess ? Ok() : BadRequest(result.Error);
+        return result.IsSuccess ? NoContent() : BadRequest(result.Error.description);
     }
 }

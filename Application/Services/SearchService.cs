@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities.ProductRelated;
+using Domain.Shared;
 
 namespace Application.Services;
 
@@ -12,8 +13,9 @@ public class SearchService : ISearchService
         _productRepository = productRepository;
     }
 
-    public async Task<IEnumerable<Product>> Search(ProductSearchCriteria criteria)
+    public async Task<Result<IEnumerable<Product>?>> Search(ProductSearchCriteria criteria)
     {
-        return await _productRepository.SearchProductsAsync(criteria);
+        var products = await _productRepository.SearchProductsAsync(criteria);
+        return Result<IEnumerable<Product>?>.Success(products);
     }
 }

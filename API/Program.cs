@@ -10,7 +10,6 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add CORS - Fixed policy name consistency
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -18,7 +17,6 @@ builder.Services.AddCors(options =>
             .AllowAnyOrigin()
             .AllowAnyMethod()
             .AllowAnyHeader());
-            //.AllowCredentials());
 });
 
 
@@ -55,10 +53,6 @@ builder.Services.AddRepositories();
 builder.Services.AddServices();
 
 
-
-
-builder.Services.AddScoped<IProductService, ProductService>();
-// Controllers - Removed duplicate registration
 
 builder.Services.AddControllers();
 

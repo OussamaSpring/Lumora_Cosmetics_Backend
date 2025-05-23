@@ -1,8 +1,9 @@
 ﻿using Domain.Entities.ProductRelated;
+using Domain.Shared;
 
 namespace Application.Interfaces.Services;
 
 public interface ISearchService
 {
-    Task<IEnumerable<Product>> Search(ProductSearchCriteria criteria);
+    Task<Result<IEnumerable<Product>?>> Search(ProductSearchCriteria criteria);
 }

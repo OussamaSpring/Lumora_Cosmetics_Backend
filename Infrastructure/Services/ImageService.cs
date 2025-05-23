@@ -1,10 +1,6 @@
-﻿using System.Net;
-using System.Net.Http.Json;
-using System.Security.Cryptography;
-using Application.Interfaces.Services;
+﻿using Application.Interfaces.Services;
 using Domain.Shared;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 
 namespace Infrastructure.Services;
 

@@ -1,5 +1,7 @@
-﻿using Application.DTOs.Address;
+﻿using System.Security.Claims;
+using Application.DTOs.Address;
 using Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers;
@@ -18,48 +20,51 @@ public class AddressController : ControllerBase
     public async Task<IActionResult> GetAddress(int addressId)
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+            return BadRequest("Invalid model state");
+
         var result = await _addressService.GetAddressById(addressId);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return result.IsSuccess ? Ok(result.Value) : NotFound();
     }
 
-    [HttpPost("{userId:guid}")]
+    [Authorize(Roles = "Customer")]
+    [HttpPost]
     public async Task<IActionResult> AddAddress(
-        [FromRoute] Guid userId,
         CreateAddressRequest request)
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+            return BadRequest("Invalid model state");
+
+        var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(id, out Guid userId))
+            return BadRequest("id fault");
 
         var result = await _addressService.CreateAddress(userId, request);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest($"{result.Error}");
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error.description);
     }
 
     [HttpDelete("{addressId:int}")]
     public async Task<IActionResult> DeleteAddress([FromRoute] int addressId)
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+            return BadRequest("Invalid model state");
 
         var result = await _addressService.DeleteAddress(addressId);
-        return result.IsSuccess ? Ok() : BadRequest($"{result.Error}");
+        return result.IsSuccess ? NoContent() : BadRequest(result.Error.description);
     }
 
-    [HttpGet("{userId:guid}")]
-    public async Task<IActionResult> GetAllAddresses([FromRoute] Guid userId)
+    [Authorize(Roles = "Customer")]
+    [HttpGet]
+    public async Task<IActionResult> GetAllAddresses()
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+            return BadRequest("Invalid model state");
+
+        var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(id, out Guid userId))
+            return BadRequest("id fault");
+
         var result = await _addressService.GetAllAddresses(userId);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error.description);
     }
 
     [HttpPut("{addressId:int}")]
@@ -68,12 +73,9 @@ public class AddressController : ControllerBase
         UpdateAddressRequest request)
     {
         if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+            return BadRequest("Invalid model state");
 
         var result = await _addressService.UpdateAddress(addressId, request);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest($"{result.Error}");
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error.description);
     }
-
 }

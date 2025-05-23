@@ -20,28 +20,13 @@ public class UserAuthentication : IUserAuthentication
 
     public async Task<Result<string?>> Login(LoginRequest loginRequest)
     {
-        //try
-        //{
-            var user = await _authRepository.GetUserByUsernameOrEmailAsync(loginRequest.UsernameOrEmail);
-            if (user is null)
-            {
-                return Result<string>.Failure(new Error("Login", "this user does not exist"));
-            }
+        var user = await _authRepository.GetUserByUsernameOrEmailAsync(loginRequest.UsernameOrEmail);
+        if (user is null || !auth(loginRequest, user))
+            return Result<string>.Failure(new Error("Login", "user name or password is wrong"));
 
-            if (!auth(loginRequest, user))
-            {
-                return Result<string>.Failure(new Error("Login", "user name or password is wrong"));
-            }
+        return Result<string>.Success(_tokenProvider.GenerateToken(user))!;
 
-            return Result<string>.Success(_tokenProvider.GenerateToken(user))!;
-        //}
-        //catch (Exception ex)
-        //{
-        //    Console.WriteLine(ex.StackTrace);
-        //    return Result<string>.Failure(new Error("Internal Server Error", ex.Message));
-        //}
-
-        static bool auth(LoginRequest loginRequest, User user)
+        bool auth(LoginRequest loginRequest, User user)
         {
             return ((string.Compare(user.Username, loginRequest.UsernameOrEmail, true) == 0 ||
                      string.Compare(user.Email, loginRequest.UsernameOrEmail, true) == 0) &&
@@ -54,15 +39,11 @@ public class UserAuthentication : IUserAuthentication
         try
         {
             if (await _authRepository.UsernameExistsAsync(register.Username))
-            {
                 return Result<string>.Failure(new Error("Register", "username already using"));
-            }
 
             // exception in unique constraint ???
             if (await _authRepository.EmailExistsAsync(register.Email))
-            {
                 return Result<string>.Failure(new Error("Register", "email already using"));
-            }
 
             var user = new User
             {
@@ -75,12 +56,11 @@ public class UserAuthentication : IUserAuthentication
                 DateOfBirth = register.DateOfBirth,
                 PhoneNumber = register.PhoneNumber,
                 Gender =  Convert(register.Gender),
-                ProfileImageUrl = string.Empty, // profile image (nullable)
+                ProfileImageUrl = null,
                 Role = userRole,
                 AccountStatus = AccountStatus.Active,
                 CreateDate = DateTime.Now,
                 UpdateDate = DateTime.Now,
-
             };
 
             var userId = await _authRepository.CreateUserAsync(user);
@@ -90,7 +70,6 @@ public class UserAuthentication : IUserAuthentication
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.StackTrace);
             return Result<string>.Failure(new Error("Internal Server Error", ex.Message));
         }
     }
@@ -105,5 +84,4 @@ public class UserAuthentication : IUserAuthentication
             return Gender.Female;
         return Gender.Unknown;
     }
-
 }

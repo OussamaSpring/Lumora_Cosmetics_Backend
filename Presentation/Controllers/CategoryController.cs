@@ -18,13 +18,9 @@ public class CategoryController : ControllerBase
     public async Task<IActionResult> GetCategoryById([FromRoute] int id)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest("model fault");
-        }
 
         var result = await _categoryService.GetCategoryByIdAsync(id);
-        Console.WriteLine(result.IsSuccess ? result.Value : result.Error);
-
         return result.IsSuccess ? Ok(result.Value) : NotFound();
     }
 
@@ -35,16 +31,14 @@ public class CategoryController : ControllerBase
             return BadRequest("bad request");
 
         var result = await _categoryService.CreateCategoryAsync(request);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error.description);
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteCategory([FromRoute] int id)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest("model fault");
-        }
 
         var result = await _categoryService.DeleteCategoryAsync(id);
         return result.IsSuccess ? Ok(result.Value) : NotFound();
@@ -55,9 +49,7 @@ public class CategoryController : ControllerBase
     public async Task<IActionResult> UpdateCategory([FromRoute] int id, UpdateCategoryRequest request)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest("model fault");
-        }
 
         var result = await _categoryService.UpdateCategoryAsync(id, request);
         return result.IsSuccess ? Ok(result.Value) : NotFound();
@@ -67,9 +59,7 @@ public class CategoryController : ControllerBase
     public async Task<IActionResult> GetAllCategory()
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest("model fault");
-        }
 
         var result = await _categoryService.GetAllCategoryAsync();
         return result.IsSuccess ? Ok(result.Value) : NotFound();

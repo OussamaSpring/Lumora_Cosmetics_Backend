@@ -31,6 +31,7 @@ public static class ServiceExtensions
         services.AddScoped<IAddressService, AddressService>();
         services.AddScoped<IVariantTypeService, VariantTypeService>();
         services.AddScoped<ISearchService, SearchService>();
+        services.AddScoped<IProductService, ProductService>();
 
         return services;
     }

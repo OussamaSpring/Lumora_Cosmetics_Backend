@@ -13,14 +13,14 @@ public class SearchController : ControllerBase
         _searchService = searchService;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Search([FromBody] ProductSearchCriteria criteria)
+    [HttpGet]
+    public async Task<IActionResult> Search([FromQuery] ProductSearchCriteria criteria)
     {
-        var products = await _searchService.Search(criteria);
-        //if (products.Count == 0)
-        //    return NotFound();
+        if (!ModelState.IsValid)
+            return BadRequest("Invalid Arguments");
 
-        return Ok(products);
+        var result = await _searchService.Search(criteria);
+        return result.IsSuccess ? Ok(result.Value) : NotFound();
     }
 
 }

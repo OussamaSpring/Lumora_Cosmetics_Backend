@@ -50,14 +50,4 @@ public sealed class JwtTokenProvider : ITokenProvider
             return string.Empty;
         }
     }
-
-    ClaimsPrincipal ITokenProvider.GetPrincipalFromToken(string token)
-    {
-        throw new NotImplementedException();
-    }
-
-    bool ITokenProvider.ValidateToken(string token)
-    {
-        throw new NotImplementedException();
-    }
 }

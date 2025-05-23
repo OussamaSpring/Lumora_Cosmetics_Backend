@@ -1,6 +1,4 @@
-﻿using System.Reflection.Metadata.Ecma335;
-using Application.DTOs.Address;
-using Application.DTOs.VarianteType;
+﻿using Application.DTOs.VarianteType;
 using Application.DTOs.VariantType;
 using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -21,11 +19,10 @@ public class VariantTypeController : ControllerBase
     public async Task<IActionResult> GetVariantType(int variantTypeId)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest(ModelState);
-        }
+
         var result = await _variantTypeService.GetVariantTypeByIdAsync(variantTypeId);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return result.IsSuccess ? Ok(result.Value) : NotFound();
     }
 
     [HttpPost("{categoryId:int}")]
@@ -34,35 +31,30 @@ public class VariantTypeController : ControllerBase
         CreateVariantTypeRequest request)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest(ModelState);
-        }
 
         var result = await _variantTypeService.CreateVariantTypeAsync(categoryId, request);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest($"{result.Error}");
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error.description);
     }
 
     [HttpDelete("{variantTypeId:int}")]
     public async Task<IActionResult> DeleteVariantType([FromRoute] int variantTypeId)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest(ModelState);
-        }
 
         var result = await _variantTypeService.DeleteVariantType(variantTypeId);
-        return result.IsSuccess ? Ok() : BadRequest($"{result.Error}");
+        return result.IsSuccess ? NoContent() : BadRequest(result.Error.description);
     }
 
     [HttpGet("category/{categoryId:int}")]
     public async Task<IActionResult> GetVariantTypeForCategory([FromRoute] int categoryId)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest(ModelState);
-        }
+
         var result = await _variantTypeService.GetVariantTypesForCategoryAsync(categoryId);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error.description);
     }
 
     [HttpPut("{variantTypeId:int}")]
@@ -71,12 +63,9 @@ public class VariantTypeController : ControllerBase
         UpdateVariantTypeRequest request)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest(ModelState);
-        }
 
         var result = await _variantTypeService.UpdateVariantAsync(variantTypeId, request);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest($"{result.Error}");
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error.description);
     }
-
 }

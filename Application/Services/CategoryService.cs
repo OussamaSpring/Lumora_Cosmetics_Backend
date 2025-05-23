@@ -32,10 +32,8 @@ public class CategoryService : ICategoryService
     {
         var category = await _categoryRepository.GetCategoryByIdAsync(categoryId);
         if (category is null)
-        {
             return Result<Category>
                 .Failure(new Error("CategoryService.DeleteCategoryAsync", "category does not exist"));
-        }
 
         // change
         return Result<Category?>.Success(await _categoryRepository.DeleteAsync(categoryId));

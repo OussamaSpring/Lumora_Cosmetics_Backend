@@ -27,10 +27,8 @@ public class UserService : IUserService
     {
         var user = await _userRepository.GetProfileAsync(id);
         if (user is null)
-        {
             return Result<UserProfileResponseWithAddresses?>.
                 Failure(new Error("User", "user does not exist"));
-        }
 
         var addresses = await _addressRepository.GetUserAddressesAsync(user.Id);
 
@@ -53,10 +51,8 @@ public class UserService : IUserService
     {
         var user = await _userRepository.GetProfileAsync(id);
         if (user is null)
-        {
             return Result<UserProfileResponse?>.
                 Failure(new Error("User", "user does not exist"));
-        }
 
         return Result<UserProfileResponse?>
             .Success(new UserProfileResponse
@@ -68,7 +64,7 @@ public class UserService : IUserService
                 LastName = user.LastName,
                 DateOfBirth = user.DateOfBirth,
                 PhoneNumber = user.PhoneNumber,
-                ProfileImageUrl = user.ProfileImageUrl,
+                ProfileImageUrl = user.ProfileImageUrl, // should change
                 Gender = user.Gender.ToString(),
             });
     }
@@ -78,10 +74,8 @@ public class UserService : IUserService
     {
         var user = await _userRepository.GetProfileAsync(id);
         if (user is null)
-        {
             return Result<UserProfileResponse?>.
                 Failure(new Error("User", "user does not exist"));
-        }
 
         user.Username = request.Username;
         user.FirstName = request.FirstName;
@@ -111,15 +105,11 @@ public class UserService : IUserService
     {
         var user = await _userRepository.GetProfileAsync(id);
         if (user is null)
-        {
             return Result<string?>.Failure(new Error("Upload photo", "user does not exist"));
-        }
 
         var uploadImageResult = await _imageService.Upload(file);
         if (uploadImageResult.IsFailure)
-        {
             return uploadImageResult;
-        }
 
         user.ProfileImageUrl = uploadImageResult.Value;
         await _userRepository.UpdateProfileImageAsync(id, uploadImageResult.Value);
@@ -133,10 +123,7 @@ public class UserService : IUserService
     {
         var user = await _userRepository.GetProfileAsync(id);
         if (user is null)
-        {
-            return Result.
-                Failure(new Error("User", "user does not exist"));
-        }
+            return Result.Failure(new Error("User", "user does not exist"));
 
         user.Email = request.Email;
         user.Password = HasherSHA256.Hash(request.password);
@@ -144,7 +131,6 @@ public class UserService : IUserService
 
         await _userRepository.UpdateCredentialsAsync(user.Id, user);
         return Result.Success();
-
     }
 
     private Gender Convert(string? value)
@@ -162,9 +148,8 @@ public class UserService : IUserService
     public async Task<Result> DeleteUserAsync(Guid id)
     {
         if (await _userRepository.GetProfileAsync(id) is null)
-        {
             return Result.Failure(new Error("user does not exist", "user does not exist"));
-        }
+
         await _userRepository.DeleteUserAsync(id);
         return Result.Success();
     }
