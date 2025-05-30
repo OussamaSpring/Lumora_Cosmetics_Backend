@@ -21,7 +21,7 @@ public class AddressRepository : IAddressRepository
 
         await connection.OpenAsync();
         using var command = new NpgsqlCommand(query, connection);
-        command.Parameters.AddWithValue("@personId", userId);
+        command.Parameters.AddWithValue("@personId", userId);   
 
         using var reader = await command.ExecuteReaderAsync();
 
